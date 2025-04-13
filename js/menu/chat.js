@@ -204,7 +204,7 @@ function generateChatThread(idChatList) {
                         if (chatThreadPosition != chatThreadPositionNext || userNameChat != userNameChatNext || (dayTitle != dayTitleNext && !isDayTitleElemExist)) {
                             if (!isDayTitleElemExist) rowChatThread += '<li><div class="chat-day-title" data-dayTitle="' + dayTitle + '"><span class="title">' + dayTitle + '</span></div></li>';
                             rowChatThread += '<li class="chatThread ' + classRight + '">' +
-                                '<div class="conversation-list pb-3 w-75 w-md-50">' +
+                                '<div class="conversation-list pb-3">' +
                                 '<div class="chat-avatar">' +
                                 '<span class="rounded-circle avatar-xs bg-primary-subtle text-primary mx-auto font-size-19 px-2 py-1">' + arrayChatThread.INITIALNAME + '</span>' +
                                 '</div>' +
