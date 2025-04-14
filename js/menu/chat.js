@@ -114,6 +114,7 @@ function activateOnClickChatListItem(firstIdChatList) {
 
         setChatContentStarterElement();
         generateChatThread(idChatList);
+        resetFocusChatInputTextMessage();
     });
 
     if (firstIdChatList != null) {
@@ -167,6 +168,7 @@ function generateChatThread(idChatList) {
                     $("#profile-sidebar-phoneNumber").html('+' + detailContact.PHONENUMBER);
                     $("#profile-sidebar-countryContinent").html(detailContact.COUNTRYNAME + ", " + detailContact.CONTINENTNAME);
                     $("#profile-sidebar-email").html(detailContact.EMAILS);
+                    $("#chat-idContact").val(detailContact.IDCONTACT);
 
                     $.each(listChatThread, function (index, arrayChatThread) {
                         var chatThreadPosition = arrayChatThread.CHATTHREADPOSITION,
@@ -190,29 +192,14 @@ function generateChatThread(idChatList) {
                             dayTitleNext = arrayChatThreadNext.DAYTITLE,
                             textStartClass = arrayChatThread.ISTEMPLATE ? 'text-start' : '';
 
-                        chatContentWrap += '<div class="ctext-wrap">' +
-                            '<div class="ctext-wrap-content ' + textStartClass + '">' +
-                            chatContent +
-                            '<p class="chat-time mb-0"><i class="ri-time-line align-middle"></i> <span class="align-middle">' + arrayChatThread.CHATTIME + '</span></p>' +
-                            '</div>' +
-                            dropdownOptionElem +
-                            '</div>';
+                        chatContentWrap += generateChatContentWrap(arrayChatThread, chatContent, arrayChatThread.CHATTIME, textStartClass, dropdownOptionElem);
 
                         var $elemRowChatThread = $(rowChatThread),
                             isDayTitleElemExist = $elemRowChatThread.find('.chat-day-title[data-dayTitle="' + dayTitle + '"]').length > 0;
 
                         if (chatThreadPosition != chatThreadPositionNext || userNameChat != userNameChatNext || (dayTitle != dayTitleNext && !isDayTitleElemExist)) {
                             if (!isDayTitleElemExist) rowChatThread += '<li><div class="chat-day-title" data-dayTitle="' + dayTitle + '"><span class="title">' + dayTitle + '</span></div></li>';
-                            rowChatThread += '<li class="chatThread ' + classRight + '">' +
-                                '<div class="conversation-list pb-3">' +
-                                '<div class="chat-avatar">' +
-                                '<span class="rounded-circle avatar-xs bg-primary-subtle text-primary mx-auto font-size-19 px-2 py-1">' + arrayChatThread.INITIALNAME + '</span>' +
-                                '</div>' +
-                                '<div class="user-chat-content">' + chatContentWrap +
-                                '<div class="conversation-name">' + userNameChat + '</div>' +
-                                '</div>' +
-                                '</div>' +
-                                '</li> ';
+                            rowChatThread += generateRowChatThread(classRight, arrayChatThread.INITIALNAME, chatContentWrap, userNameChat);
                             chatContentWrap = '';
                         }
                     });
@@ -305,12 +292,150 @@ function generateChatContent(arrayChatThread) {
     return elemContentReturn;
 }
 
+function generateRowChatThread(classRight, initialName, chatContentWrap, userNameChat) {
+    return '<li class="chatThread ' + classRight + '">' +
+        '<div class="conversation-list pb-3">' +
+        '<div class="chat-avatar">' +
+        '<span class="rounded-circle avatar-xs bg-primary-subtle text-primary mx-auto font-size-19 px-2 py-1">' + initialName + '</span>' +
+        '</div>' +
+        '<div class="user-chat-content">' + chatContentWrap +
+        '<div class="conversation-name">' + userNameChat + '</div>' +
+        '</div>' +
+        '</div>' +
+        '</li> ';
+}
+
+function generateChatContentWrap(arrayChatThread, chatContent, chatTime, textStartClass = '', dropdownOptionElem = '') {
+    let idMessage = arrayChatThread.IDMESSAGE,
+        classContentLongText = generateClassContentLongText(arrayChatThread),
+        dateTimeSent = arrayChatThread.DATETIMESENT,
+        dateTimeSentStr = dateTimeSent !== null ? moment.unix(dateTimeSent).tz(timezoneOffset).format('DD MMM YYYY HH:mm') : '-',
+        dateTimeDelivered = arrayChatThread.DATETIMEDELIVERED,
+        dateTimeDeliveredStr = dateTimeDelivered !== null ? moment.unix(dateTimeDelivered).tz(timezoneOffset).format('DD MMM YYYY HH:mm') : '-',
+        dateTimeRead = arrayChatThread.DATETIMEREAD,
+        dateTimeReadStr = dateTimeRead !== null ? moment.unix(dateTimeRead).tz(timezoneOffset).format('DD MMM YYYY HH:mm') : '-',
+        classIconACK = '';
+
+    switch (true) {
+        case (dateTimeRead !== null): classIconACK = 'ri-check-double-line text-primary'; break;
+        case (dateTimeDelivered !== null): classIconACK = 'ri-check-double-line text-muted'; break;
+        case (dateTimeSent !== null): classIconACK = 'ri-check-line text-muted'; break;
+        default: classIconACK = 'ri-hourglass-2-fill text-muted'; break;
+    }
+
+    return '<div class="ctext-wrap">' +
+        '<div class="ctext-wrap-content ' + textStartClass + ' ' + classContentLongText + '">' +
+        chatContent +
+        '<p class="chat-time mb-0 d-flex justify-content-between font-size-13">' +
+        '<span class="me-2"><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>' +
+        '<span class="ms-2"><i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data-idMessage="' + idMessage + '"></i></span>' +
+        '</p>' +
+        '</div>' +
+        dropdownOptionElem +
+        '</div>';
+}
+
+function generateClassContentLongText(arrayChatThread) {
+    let contentBody = arrayChatThread.CHATCONTENTBODY,
+        contentBodyHtml = generateChatContentBody(contentBody),
+        isContainsLongText = false,
+        arrContentBodyHtml = contentBodyHtml.split('<br>');
+    $.each(arrContentBodyHtml, function (index, value) {
+        if (value.length > 100) {
+            isContainsLongText = true;
+        }
+    });
+
+    return isContainsLongText ? 'w-75 mw-100' : '';
+}
+
 function openChatContact(parameters) {
     let idContact = parameters.idContact,
         phoneNumber = parameters.phoneNumber;
 
     $("#filter-idContact").val(idContact);
     $("#filter-searchKeyword").val(phoneNumber);
+}
+
+$('#chat-inputTextMessage').off('keydown');
+$('#chat-inputTextMessage').on('keydown', function (e) {
+    if ((e.key === 'Enter' || e.which == 13) && e.shiftKey) {
+        e.preventDefault();
+        $(this).val($(this).val() + "\n");
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+$('#chat-inputTextMessage').off('input');
+$('#chat-inputTextMessage').on('input', function () {
+    let currentRowsNumber = (this.value.match(/\n/g) || []).length,
+        updatedRowsNumber = currentRowsNumber + 1;
+    $(this).attr('rows', updatedRowsNumber > 2 ? 2 : updatedRowsNumber);
+});
+
+$('#chat-formMessage').off('submit');
+$('#chat-formMessage').on('submit', function (e) {
+    e.preventDefault();
+    sendMessage();
+});
+
+function sendMessage() {
+    let idContact = $('#chat-idContact').val(),
+        phoneNumber = $('#profile-sidebar-phoneNumber').html(),
+        message = $('#chat-inputTextMessage').val(),
+        dataSend = {
+            idContact: idContact,
+            message: message,
+            phoneNumber: phoneNumber
+        };
+    $.ajax({
+        type: 'POST',
+        url: baseURL + "chat/sendMessage",
+        contentType: 'application/json',
+        dataType: 'json',
+        cache: false,
+        data: mergeDataSend(dataSend),
+        xhrFields: {
+            withCredentials: true,
+        },
+        headers: {
+            Authorization: "Bearer " + getUserToken(),
+        },
+        beforeSend: function () {
+            NProgress.set(0.4);
+            $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
+        },
+        complete: function (jqXHR, textStatus) {
+            var responseJSON = jqXHR.responseJSON;
+            switch (jqXHR.status) {
+                case 200:
+                    let arrayChatThread = responseJSON.arrayChatThread,
+                        chatTime = responseJSON.chatTime,
+                        initialName = responseJSON.initialName,
+                        userNameChat = responseJSON.userNameChat,
+                        chatContent = generateChatContent(arrayChatThread),
+                        chatContentWrap = generateChatContentWrap(arrayChatThread, chatContent, chatTime, 'text-start'),
+                        chatThread = generateRowChatThread('right', initialName, chatContentWrap, userNameChat);
+                    $('#chat-conversation-ul').append(chatThread);
+                    scrollToBottomSimpleBar('chat-conversation');
+                    resetFocusChatInputTextMessage();
+                    break;
+                default:
+                    generateWarningMessageResponse(jqXHR);
+                    break;
+            }
+        }
+    }).always(function (jqXHR, textStatus) {
+        NProgress.done();
+        setUserToken(jqXHR);
+        $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', false);
+    });
+}
+
+function resetFocusChatInputTextMessage() {
+    $('#chat-inputTextMessage').focus().attr('rows', 1).val('');
 }
 
 chatFunc();

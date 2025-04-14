@@ -299,8 +299,12 @@ function recalculateSimpleBar(elementId, scrollToBottom = false) {
     simpleBarInstance.recalculate();
 
     if (scrollToBottom) {
-        $("#" + elementId + " .simplebar-content-wrapper").scrollTop($("#" + elementId + " .simplebar-content-wrapper").prop("scrollHeight"));
+        scrollToBottomSimpleBar(elementId);
     }
+}
+
+function scrollToBottomSimpleBar(elementId) {
+    $("#" + elementId + " .simplebar-content-wrapper").scrollTop($("#" + elementId + " .simplebar-content-wrapper").prop("scrollHeight"));
 }
 
 function setVerticalCenterContentContainer(elemId, contentHeight) {
