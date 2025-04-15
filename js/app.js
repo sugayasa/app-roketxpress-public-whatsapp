@@ -356,6 +356,14 @@ function openMenuSetCallBack(menuId, callback, parameters) {
     }
 }
 
+function activateBootstrapTooltip() {
+    $('[data-bs-toggle="tooltip"]').each(function () {
+        let title = $(this).attr('data-bs-title');
+        if (typeof title !== 'undefined' && title !== null) $(this).attr('data-bs-title', title.replace(/\n/g, '<br>'));
+        new bootstrap.Tooltip(this);
+    });
+}
+
 window.onload = function () {
     history.pushState(null, null, window.location.href);
 

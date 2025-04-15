@@ -328,7 +328,9 @@ function generateChatContentWrap(arrayChatThread, chatContent, chatTime, textSta
         chatContent +
         '<p class="chat-time mb-0 d-flex justify-content-between font-size-13">' +
         '<span class="me-2"><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>' +
-        '<span class="ms-2"><i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data-idMessage="' + idMessage + '"></i></span>' +
+        '<span class="ms-2" data-bs-toggle="modal" data-bs-target="#modal-messageACKDetails" data-ack-sent="' + dateTimeSentStr + '" data-ack-delivered="' + dateTimeDeliveredStr + '" data-ack-read="' + dateTimeReadStr + '">' +
+        '<i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data-idMessage="' + idMessage + '"></i>' +
+        '</span>' +
         '</p>' +
         '</div>' +
         dropdownOptionElem +
@@ -437,5 +439,17 @@ function sendMessage() {
 function resetFocusChatInputTextMessage() {
     $('#chat-inputTextMessage').focus().attr('rows', 1).val('');
 }
+
+$('#modal-messageACKDetails').off('show.bs.modal');
+$('#modal-messageACKDetails').on('show.bs.modal', function (e) {
+    let button = $(e.relatedTarget),
+        dateTimeSent = button.data('ack-sent'),
+        dateTimeDelivered = button.data('ack-delivered'),
+        dateTimeRead = button.data('ack-read');
+
+    $('#messageACKDetails-dateTimeSent').html(dateTimeSent);
+    $('#messageACKDetails-dateTimeDelivered').html(dateTimeDelivered);
+    $('#messageACKDetails-dateTimeRead').html(dateTimeRead);
+});
 
 chatFunc();
