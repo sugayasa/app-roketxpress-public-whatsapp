@@ -169,7 +169,7 @@ function getDetailContact(idContact) {
                     $("#detailContact-fullname").html(detailContact.NAMEFULL);
                     $("#detailContact-phoneNumberCountry").html("| +" + detailContact.PHONENUMBER + " (" + detailContact.COUNTRYNAME + ", " + detailContact.CONTINENTNAME + ")");
                     $("#detailContact-email").html("| " + detailContact.EMAILS);
-                    $("#detailContact-lastReplyDateTime").html("| " + (detailContact.LASTREPLYDATETIME == '' ? '-' : detailContact.LASTREPLYDATETIME));
+                    $("#detailContact-lastReplyDateTime").html("| " + (detailContact.DATETIMELASTREPLY == '' ? '-' : detailContact.DATETIMELASTREPLY));
                     $("#detailContact-totalReservation").html(detailContact.TOTALRESERVATION + " Total reservation(s)");
                     if (isValidWhatsAppAccount == -1) $("#detailContact-invalidWhatsAppAcountAlert").removeClass('d-none');
 

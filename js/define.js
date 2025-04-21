@@ -34,6 +34,14 @@ function getHardwareID() {
     return hardwareID;
 }
 
+function getUserTimeZoneOffset() {
+    let timezoneOffset = moment.tz.guess();
+    if (timezoneOffset === "UTC") {
+        timezoneOffset = moment.tz.names()[0];
+    }
+    return timezoneOffset;
+}
+
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = window.location.search.substring(1),
         sURLVariables = sPageURL.split("&"),

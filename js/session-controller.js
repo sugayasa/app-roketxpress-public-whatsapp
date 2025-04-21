@@ -226,11 +226,13 @@ function setUserToken(jqXHR, showWarningModal = true, defaultToken) {
 }
 
 function mergeDataSend(dataMerge = null) {
-    var hardwareID = { hardwareID: getHardwareID() },
+    var hardwareID = getHardwareID(),
+        userTimeZoneOffset = getUserTimeZoneOffset(),
+        defaultDataSend = { hardwareID: hardwareID, userTimeZoneOffset: userTimeZoneOffset },
         dataSend =
             dataMerge == null
-                ? $.extend({}, hardwareID)
-                : $.extend({}, dataMerge, hardwareID);
+                ? $.extend({}, defaultDataSend)
+                : $.extend({}, dataMerge, defaultDataSend);
     return JSON.stringify(dataSend);
 }
 

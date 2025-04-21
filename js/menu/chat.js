@@ -60,7 +60,7 @@ function getDataChatList(page = 1) {
                     $.each(dataChatList, function (index, arrayChat) {
                         var totalUnreadMsg = arrayChat.TOTALUNREADMESSAGE;
                         totalUnreadMsgElem = totalUnreadMsg > 0 ? '<div class="unread-message"><span class="badge badge-soft-danger rounded-pill">' + totalUnreadMsg + '</span></div>' : '';
-                        rows += '<li class="unread chatList-item" data-idChatList="' + arrayChat.IDCHATLIST + '">' +
+                        rows += '<li class="unread chatList-item" data-idChatList="' + arrayChat.IDCHATLIST + '" data-timestamp="' + arrayChat.DATETIMELASTMESSAGE + '">' +
                             '<a href="#" >' +
                             '<div class="d-flex">' +
                             '<div class="chat-user-img align-self-center me-3 ms-0">' +
@@ -72,7 +72,7 @@ function getDataChatList(page = 1) {
                             '<h5 class="text-truncate font-size-15 mb-1">' + arrayChat.NAMEFULL + '</h5>' +
                             '<p class="chat-user-message text-truncate mb-0">' + arrayChat.LASTMESSAGE + '</p>' +
                             '</div>' +
-                            '<div class="font-size-11">' + arrayChat.LASTMESSAGEDATETIME + '</div>' + totalUnreadMsgElem +
+                            '<div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>' + totalUnreadMsgElem +
                             '</div>' +
                             '</a>' +
                             '</li>';
@@ -97,6 +97,7 @@ function getDataChatList(page = 1) {
 
             activateOnClickChatListItem(firstIdChatList);
             recalculateSimpleBar('simpleBar-list-chatList');
+            counterTimeChatList();
         }
     }).always(function (jqXHR, textStatus) {
         NProgress.done();
@@ -175,24 +176,14 @@ function generateChatThread(idChatList) {
                             userNameChat = arrayChatThread.USERNAMECHAT,
                             dayTitle = arrayChatThread.DAYTITLE,
                             chatContent = generateChatContent(arrayChatThread),
-                            classRight = chatThreadPosition == 'L' ? '' : 'right',
-                            dropdownOptionElem = chatThreadPosition == 'L' ?
-                                '<div class="dropdown align-self-start">' +
-                                '<a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
-                                '<i class="ri-more-2-fill"></i>' +
-                                '</a>' +
-                                '<div class="dropdown-menu">' +
-                                '<a class="dropdown-item" href="#">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>' +
-                                '<a class="dropdown-item" href="#">Forward <i class="ri-chat-forward-line float-end text-muted"></i></a>' +
-                                '</div>' +
-                                '</div>' : '';
+                            classRight = chatThreadPosition == 'L' ? '' : 'right';
                         var arrayChatThreadNext = (index + 1 < listChatThread.length) ? listChatThread[index + 1] : false,
                             chatThreadPositionNext = arrayChatThreadNext.CHATTHREADPOSITION,
                             userNameChatNext = arrayChatThreadNext.USERNAMECHAT,
                             dayTitleNext = arrayChatThreadNext.DAYTITLE,
                             textStartClass = arrayChatThread.ISTEMPLATE ? 'text-start' : '';
 
-                        chatContentWrap += generateChatContentWrap(arrayChatThread, chatContent, arrayChatThread.CHATTIME, textStartClass, dropdownOptionElem);
+                        chatContentWrap += generateChatContentWrap(chatThreadPosition, arrayChatThread, chatContent, arrayChatThread.CHATTIME, textStartClass);
 
                         var $elemRowChatThread = $(rowChatThread),
                             isDayTitleElemExist = $elemRowChatThread.find('.chat-day-title[data-dayTitle="' + dayTitle + '"]').length > 0;
@@ -279,19 +270,6 @@ function generateChatThread(idChatList) {
     });
 }
 
-function generateChatContent(arrayChatThread) {
-    var contentHeader = arrayChatThread.CHATCONTENTHEADER,
-        contentBody = arrayChatThread.CHATCONTENTBODY,
-        contentFooter = arrayChatThread.CHATCONTENTFOOTER,
-        elemContentReturn = '';
-
-    if (contentHeader != '') elemContentReturn += '<p class="mb-0 fw-bold border-bottom border-primary pb-2 mb-2">' + contentHeader + '</p>';
-    if (contentBody != '') elemContentReturn += '<p class="mb-0">' + generateChatContentBody(contentBody) + '</p>';
-    if (contentFooter != '') elemContentReturn += '<p class="mb-0 small text-muted border-top border-primary pt-2 mt-3">' + contentFooter + '</p>';
-
-    return elemContentReturn;
-}
-
 function generateRowChatThread(classRight, initialName, chatContentWrap, userNameChat) {
     return '<li class="chatThread ' + classRight + '">' +
         '<div class="conversation-list pb-3">' +
@@ -303,52 +281,6 @@ function generateRowChatThread(classRight, initialName, chatContentWrap, userNam
         '</div>' +
         '</div>' +
         '</li> ';
-}
-
-function generateChatContentWrap(arrayChatThread, chatContent, chatTime, textStartClass = '', dropdownOptionElem = '') {
-    let idMessage = arrayChatThread.IDMESSAGE,
-        classContentLongText = generateClassContentLongText(arrayChatThread),
-        dateTimeSent = arrayChatThread.DATETIMESENT,
-        dateTimeSentStr = dateTimeSent !== null ? moment.unix(dateTimeSent).tz(timezoneOffset).format('DD MMM YYYY HH:mm') : '-',
-        dateTimeDelivered = arrayChatThread.DATETIMEDELIVERED,
-        dateTimeDeliveredStr = dateTimeDelivered !== null ? moment.unix(dateTimeDelivered).tz(timezoneOffset).format('DD MMM YYYY HH:mm') : '-',
-        dateTimeRead = arrayChatThread.DATETIMEREAD,
-        dateTimeReadStr = dateTimeRead !== null ? moment.unix(dateTimeRead).tz(timezoneOffset).format('DD MMM YYYY HH:mm') : '-',
-        classIconACK = '';
-
-    switch (true) {
-        case (dateTimeRead !== null): classIconACK = 'ri-check-double-line text-primary'; break;
-        case (dateTimeDelivered !== null): classIconACK = 'ri-check-double-line text-muted'; break;
-        case (dateTimeSent !== null): classIconACK = 'ri-check-line text-muted'; break;
-        default: classIconACK = 'ri-hourglass-2-fill text-muted'; break;
-    }
-
-    return '<div class="ctext-wrap">' +
-        '<div class="ctext-wrap-content ' + textStartClass + ' ' + classContentLongText + '">' +
-        chatContent +
-        '<p class="chat-time mb-0 d-flex justify-content-between font-size-13">' +
-        '<span class="me-2"><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>' +
-        '<span class="ms-2" data-bs-toggle="modal" data-bs-target="#modal-messageACKDetails" data-ack-sent="' + dateTimeSentStr + '" data-ack-delivered="' + dateTimeDeliveredStr + '" data-ack-read="' + dateTimeReadStr + '">' +
-        '<i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data-idMessage="' + idMessage + '"></i>' +
-        '</span>' +
-        '</p>' +
-        '</div>' +
-        dropdownOptionElem +
-        '</div>';
-}
-
-function generateClassContentLongText(arrayChatThread) {
-    let contentBody = arrayChatThread.CHATCONTENTBODY,
-        contentBodyHtml = generateChatContentBody(contentBody),
-        isContainsLongText = false,
-        arrContentBodyHtml = contentBodyHtml.split('<br>');
-    $.each(arrContentBodyHtml, function (index, value) {
-        if (value.length > 100) {
-            isContainsLongText = true;
-        }
-    });
-
-    return isContainsLongText ? 'w-75 mw-100' : '';
 }
 
 function openChatContact(parameters) {
@@ -410,18 +342,8 @@ function sendMessage() {
             $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
         },
         complete: function (jqXHR, textStatus) {
-            var responseJSON = jqXHR.responseJSON;
             switch (jqXHR.status) {
                 case 200:
-                    let arrayChatThread = responseJSON.arrayChatThread,
-                        chatTime = responseJSON.chatTime,
-                        initialName = responseJSON.initialName,
-                        userNameChat = responseJSON.userNameChat,
-                        chatContent = generateChatContent(arrayChatThread),
-                        chatContentWrap = generateChatContentWrap(arrayChatThread, chatContent, chatTime, 'text-start'),
-                        chatThread = generateRowChatThread('right', initialName, chatContentWrap, userNameChat);
-                    $('#chat-conversation-ul').append(chatThread);
-                    scrollToBottomSimpleBar('chat-conversation');
                     resetFocusChatInputTextMessage();
                     break;
                 default:
@@ -443,13 +365,62 @@ function resetFocusChatInputTextMessage() {
 $('#modal-messageACKDetails').off('show.bs.modal');
 $('#modal-messageACKDetails').on('show.bs.modal', function (e) {
     let button = $(e.relatedTarget),
+        idChatThread = button.data('idchatthread'),
         dateTimeSent = button.data('ack-sent'),
         dateTimeDelivered = button.data('ack-delivered'),
         dateTimeRead = button.data('ack-read');
 
-    $('#messageACKDetails-dateTimeSent').html(dateTimeSent);
-    $('#messageACKDetails-dateTimeDelivered').html(dateTimeDelivered);
-    $('#messageACKDetails-dateTimeRead').html(dateTimeRead);
+    if (typeof idChatThread === 'undefined' || idChatThread == '') {
+        let messageACKDetails = '<dt class="col-5 mb-2">Sent</dt>' +
+            '<dd class="col-7 mb-2 text-muted">' + dateTimeSent + '</dd>' +
+            '<dt class="col-5 mb-2">Delivered</dt>' +
+            '<dd class="col-7 mb-2 text-muted">' + dateTimeDelivered + '</dd>' +
+            '<dt class="col-5 mb-2">Read</dt>' +
+            '<dd class="col-7 mb-2 text-muted">' + dateTimeRead + '</dd>';
+        $('#messageACKDetails-rowData').html(messageACKDetails);
+    } else {
+        let dataSend = { idChatThread: idChatThread };
+        $.ajax({
+            type: 'POST',
+            url: baseURL + "chat/getDetailThreadACK",
+            contentType: 'application/json',
+            dataType: 'json',
+            cache: false,
+            data: mergeDataSend(dataSend),
+            xhrFields: {
+                withCredentials: true,
+            },
+            headers: {
+                Authorization: "Bearer " + getUserToken(),
+            },
+            beforeSend: function () {
+                NProgress.set(0.4);
+                $("#messageACKDetails-rowData").html(loaderElem);
+            },
+            complete: function (jqXHR, textStatus) {
+                var responseJSON = jqXHR.responseJSON,
+                    messageACKDetails = '';
+                switch (jqXHR.status) {
+                    case 200:
+                        let dataThreadACK = responseJSON.dataThreadACK;
+                        messageACKDetails = '<h6 class="mb-2 text-muted">Read By :</h6>';
+                        $.each(dataThreadACK, function (index, arrayThreadACK) {
+                            messageACKDetails += '<dt class="col-6 mb-2 text-muted">' + formatDateTimeZoneString(arrayThreadACK.DATETIMEREAD) + '</dt>' +
+                                '<dd class="col-6 mb-2">' + arrayThreadACK.NAME + '</dd>';
+                        });
+                        break;
+                    default:
+                        messageACKDetails = '<dt class="col-12">' + getMessageResponse(jqXHR) + '</dt>';
+                        break;
+                }
+
+                $("#messageACKDetails-rowData").html(messageACKDetails);
+            }
+        }).always(function (jqXHR, textStatus) {
+            NProgress.done();
+            setUserToken(jqXHR);
+        });
+    }
 });
 
 chatFunc();

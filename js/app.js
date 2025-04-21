@@ -65,10 +65,44 @@ $(document).ready(function () {
             var responseJSON = localStorage.getItem("form_" + alias);
             renderMainView(JSON.parse(responseJSON));
         }
+
+        if (typeof intervalId !== 'undefined') {
+            clearInterval(intervalId);
+        }
+    }), $(document).on("visibilitychange", function () {
+        if (document.visibilityState === "visible") updateUnreadMessageCountOnActiveVisibilityWindow();
     });
 
     $('.menu-item').first().click();
 });
+
+function updateUnreadMessageCountOnActiveVisibilityWindow() {
+    const lastAlias = localStorage.getItem('lastAlias');
+    if (lastAlias == 'CHT') {
+        const containerConversation = $("#chat-conversation-ul");
+        if (containerConversation.length > 0) {
+            const activeChatListItem = $("#list-chatListData").find('li.chatList-item.active'),
+                unreadMessageCount = activeChatListItem.find('div.unread-message').find('span').text();
+
+            if (parseInt(unreadMessageCount) > 0) {
+                const idChatList = activeChatListItem.attr('data-idchatlist'),
+                    dataSend = { idChatList: idChatList };
+                $.ajax({
+                    type: 'POST',
+                    url: baseURL + "chat/updateUnreadMessageCount",
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    cache: false,
+                    data: mergeDataSend(dataSend),
+                    xhrFields: { withCredentials: true },
+                    headers: { Authorization: "Bearer " + getUserToken() }
+                }).always(function (jqXHR, textStatus) {
+                    setUserToken(jqXHR);
+                });
+            }
+        }
+    }
+}
 
 function hideModalResetActiveMenuLinkSetLoader() {
     $(".modal").modal("hide");
@@ -313,6 +347,19 @@ function setVerticalCenterContentContainer(elemId, contentHeight) {
     $("#" + elemId).css('margin-top', marginTop + 'px');
 }
 
+function generateChatContent(arrayChatThread) {
+    var contentHeader = arrayChatThread.CHATCONTENTHEADER,
+        contentBody = arrayChatThread.CHATCONTENTBODY,
+        contentFooter = arrayChatThread.CHATCONTENTFOOTER,
+        elemContentReturn = '';
+
+    if (contentHeader != '') elemContentReturn += '<p class="mb-0 fw-bold border-bottom border-primary pb-2 mb-2">' + contentHeader + '</p>';
+    if (contentBody != '') elemContentReturn += '<p class="mb-0">' + generateChatContentBody(contentBody) + '</p>';
+    if (contentFooter != '') elemContentReturn += '<p class="mb-0 small text-muted border-top border-primary pt-2 mt-3">' + contentFooter + '</p>';
+
+    return elemContentReturn;
+}
+
 function generateChatContentBody(contentBody) {
     contentBody = String(contentBody);
     contentBody = contentBody.replace(/\n/g, "<br>");
@@ -322,6 +369,65 @@ function generateChatContentBody(contentBody) {
     contentBody = contentBody.replace(/\~(.*?)\~/g, "<del>$1</del>");
 
     return contentBody;
+}
+
+function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatContent, chatTime, textStartClass = '') {
+    let idChatThread = arrayChatThread.IDCHATTHREAD,
+        idMessage = arrayChatThread.IDMESSAGE,
+        classContentLongText = generateClassContentLongText(arrayChatThread),
+        dateTimeSent = arrayChatThread.DATETIMESENT,
+        dateTimeSentStr = dateTimeSent !== null ? formatDateTimeZoneString(dateTimeSent) : '-',
+        dateTimeDelivered = arrayChatThread.DATETIMEDELIVERED,
+        dateTimeDeliveredStr = dateTimeDelivered !== null ? formatDateTimeZoneString(dateTimeDelivered) : '-',
+        dateTimeRead = arrayChatThread.DATETIMEREAD,
+        dateTimeReadStr = dateTimeRead !== null ? formatDateTimeZoneString(dateTimeRead) : '-',
+        dataIdChatThreadAttr = chatThreadPosition == 'L' ? 'data-idchatthread="' + idChatThread + '"' : '',
+        dropdownOptionElem = chatThreadPosition == 'L' ?
+            '<div class="dropdown align-self-start">' +
+            '<a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
+            '<i class="ri-more-2-fill"></i>' +
+            '</a>' +
+            '<div class="dropdown-menu">' +
+            '<a class="dropdown-item" href="#">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>' +
+            '<a class="dropdown-item" href="#">Forward <i class="ri-chat-forward-line float-end text-muted"></i></a>' +
+            '</div>' +
+            '</div>' : '',
+        classIconACK = '';
+
+    switch (true) {
+        case (dateTimeRead !== null && chatThreadPosition == 'R'): classIconACK = 'ri-check-double-line text-primary'; break;
+        case (dateTimeDelivered !== null && chatThreadPosition == 'R'): classIconACK = 'ri-check-double-line text-muted'; break;
+        case (dateTimeSent !== null && chatThreadPosition == 'R'): classIconACK = 'ri-check-line text-muted'; break;
+        case (chatThreadPosition == 'L'): classIconACK = 'ri-information-2-line'; break;
+        default: classIconACK = 'ri-hourglass-2-fill text-muted'; break;
+    }
+
+    return '<div class="ctext-wrap" data-idMessage="' + idMessage + '">' +
+        '<div class="ctext-wrap-content ' + textStartClass + ' ' + classContentLongText + '">' +
+        chatContent +
+        '<p class="chat-time mb-0 d-flex justify-content-between font-size-13">' +
+        '<span class="me-2"><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>' +
+        '<span class="ms-2" data-bs-toggle="modal" data-bs-target="#modal-messageACKDetails" ' + dataIdChatThreadAttr + ' data-ack-sent="' + dateTimeSentStr + '" data-ack-delivered="' + dateTimeDeliveredStr + '" data-ack-read="' + dateTimeReadStr + '">' +
+        '<i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data-idMessage="' + idMessage + '"></i>' +
+        '</span>' +
+        '</p>' +
+        '</div>' +
+        dropdownOptionElem +
+        '</div>';
+}
+
+function generateClassContentLongText(arrayChatThread) {
+    let contentBody = arrayChatThread.CHATCONTENTBODY,
+        contentBodyHtml = generateChatContentBody(contentBody),
+        isContainsLongText = false,
+        arrContentBodyHtml = contentBodyHtml.split('<br>');
+    $.each(arrContentBodyHtml, function (index, value) {
+        if (value.length > 100) {
+            isContainsLongText = true;
+        }
+    });
+
+    return isContainsLongText ? 'w-75 mw-100' : '';
 }
 
 function openMenuSetCallBack(menuId, callback, parameters) {
@@ -362,6 +468,46 @@ function activateBootstrapTooltip() {
         if (typeof title !== 'undefined' && title !== null) $(this).attr('data-bs-title', title.replace(/\n/g, '<br>'));
         new bootstrap.Tooltip(this);
     });
+}
+
+function formatDateTimeZoneString(timeStamp) {
+    return moment.unix(timeStamp).tz(timezoneOffset).format('DD MMM YY HH:mm');
+}
+
+function counterTimeChatList() {
+    let elemChatListItem = $('.chatList-item'),
+        timeStampNow = moment.utc(),
+        arrTimeStampChatList = [];
+
+    elemChatListItem.each(function (index, value) {
+        let timestampChatList = $(this).attr('data-timestamp');
+        if (Math.abs(timeStampNow.diff(moment.unix(timestampChatList), 'minutes')) <= 60) arrTimeStampChatList.push(parseInt(timestampChatList));
+    });
+
+    clearInterval(intervalId);
+    intervalId = setInterval(function () {
+        let timeStampNow = moment.utc();
+        arrTimeStampChatList.forEach(function (timestampChatList) {
+            let differenceInMinutes = timeStampNow.diff(moment.unix(timestampChatList), 'minutes'),
+                elemChatListItem = $('.chatList-item[data-timestamp="' + timestampChatList + '"]'),
+                elemTimestampChatListItem = elemChatListItem.find('div.chatList-item-time');
+
+            if (differenceInMinutes < 60) {
+                if (differenceInMinutes == 0) elemTimestampChatListItem.html("Just Now");
+                if (differenceInMinutes == 1) elemTimestampChatListItem.html("1 min ago");
+                if (differenceInMinutes > 1) elemTimestampChatListItem.html(differenceInMinutes + " mins ago");
+            } else {
+                let timestampChatListMoment = moment.unix(timestampChatList).tz(timezoneOffset),
+                    timeStampNowLocal = moment.tz(timezoneOffset);
+
+                if (!timestampChatListMoment.isSame(timeStampNowLocal, 'day')) {
+                    elemTimestampChatListItem.html(moment.unix(timestampChatList).tz(timezoneOffset).format('DD MMM YYYY'));
+                } else {
+                    elemTimestampChatListItem.html(moment.unix(timestampChatList).tz(timezoneOffset).format('HH:mm'));
+                }
+            }
+        });
+    }, 1000);
 }
 
 window.onload = function () {
