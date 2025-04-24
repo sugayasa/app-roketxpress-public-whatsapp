@@ -70,36 +70,49 @@ $(document).ready(function () {
             clearInterval(intervalId);
         }
     }), $(document).on("visibilitychange", function () {
-        if (document.visibilityState === "visible") updateUnreadMessageCountOnActiveVisibilityWindow();
+        if (document.visibilityState === "visible") {
+            const activeMenu = $(".nav-link.active").closest('li').attr('id');
+
+            switch (activeMenu) {
+                case 'menuCHT':
+                    counterTimeChatList();
+                    updateUnreadMessageCountOnActiveVisibilityWindow();
+                    break;
+                case 'menuCNCT':
+                    activateCounterChatSession();
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            clearInterval(intervalId);
+        }
     });
 
     $('.menu-item').first().click();
 });
 
 function updateUnreadMessageCountOnActiveVisibilityWindow() {
-    const lastAlias = localStorage.getItem('lastAlias');
-    if (lastAlias == 'CHT') {
-        const containerConversation = $("#chat-conversation-ul");
-        if (containerConversation.length > 0) {
-            const activeChatListItem = $("#list-chatListData").find('li.chatList-item.active'),
-                unreadMessageCount = activeChatListItem.find('div.unread-message').find('span').text();
+    const containerConversation = $("#chat-conversation-ul");
+    if (containerConversation.length > 0) {
+        const activeChatListItem = $("#list-chatListData").find('li.chatList-item.active'),
+            unreadMessageCount = activeChatListItem.find('div.unread-message').find('span').text();
 
-            if (parseInt(unreadMessageCount) > 0) {
-                const idChatList = activeChatListItem.attr('data-idchatlist'),
-                    dataSend = { idChatList: idChatList };
-                $.ajax({
-                    type: 'POST',
-                    url: baseURL + "chat/updateUnreadMessageCount",
-                    contentType: 'application/json',
-                    dataType: 'json',
-                    cache: false,
-                    data: mergeDataSend(dataSend),
-                    xhrFields: { withCredentials: true },
-                    headers: { Authorization: "Bearer " + getUserToken() }
-                }).always(function (jqXHR, textStatus) {
-                    setUserToken(jqXHR);
-                });
-            }
+        if (parseInt(unreadMessageCount) > 0) {
+            const idChatList = activeChatListItem.attr('data-idchatlist'),
+                dataSend = { idChatList: idChatList };
+            $.ajax({
+                type: 'POST',
+                url: baseURL + "chat/updateUnreadMessageCount",
+                contentType: 'application/json',
+                dataType: 'json',
+                cache: false,
+                data: mergeDataSend(dataSend),
+                xhrFields: { withCredentials: true },
+                headers: { Authorization: "Bearer " + getUserToken() }
+            }).always(function (jqXHR, textStatus) {
+                setUserToken(jqXHR);
+            });
         }
     }
 }
@@ -487,15 +500,28 @@ function counterTimeChatList() {
     clearInterval(intervalId);
     intervalId = setInterval(function () {
         let timeStampNow = moment.utc();
+        elemChatListItem.each(function (index, value) {
+            let timeStampLastReply = $(this).attr('data-datetimelastreply');
+            if (Math.abs(timeStampNow.diff(moment.unix(timeStampLastReply), 'seconds')) < (60 * 60 * 24)) {
+                $(this).find('div.chat-user-img').addClass('online');
+            } else {
+                $(this).find('div.chat-user-img').removeClass('online');
+            }
+        });
+
         arrTimeStampChatList.forEach(function (timestampChatList) {
             let differenceInMinutes = timeStampNow.diff(moment.unix(timestampChatList), 'minutes'),
                 elemChatListItem = $('.chatList-item[data-timestamp="' + timestampChatList + '"]'),
-                elemTimestampChatListItem = elemChatListItem.find('div.chatList-item-time');
+                elemTimestampChatListItem = elemChatListItem.find('div.chatList-item-time'),
+                dateTimeChatListItemStr = elemTimestampChatListItem.html(),
+                dateTimeChatListItemUpdateStr = '-';
 
             if (differenceInMinutes < 60) {
-                if (differenceInMinutes == 0) elemTimestampChatListItem.html("Just Now");
-                if (differenceInMinutes == 1) elemTimestampChatListItem.html("1 min ago");
-                if (differenceInMinutes > 1) elemTimestampChatListItem.html(differenceInMinutes + " mins ago");
+                if (differenceInMinutes == 0) dateTimeChatListItemUpdateStr = "Just Now";
+                if (differenceInMinutes == 1) dateTimeChatListItemUpdateStr = "1 min ago";
+                if (differenceInMinutes > 1) dateTimeChatListItemUpdateStr = differenceInMinutes + " mins ago";
+
+                if (dateTimeChatListItemStr != dateTimeChatListItemUpdateStr) elemTimestampChatListItem.html(dateTimeChatListItemUpdateStr);
             } else {
                 let timestampChatListMoment = moment.unix(timestampChatList).tz(timezoneOffset),
                     timeStampNowLocal = moment.tz(timezoneOffset);
@@ -507,6 +533,28 @@ function counterTimeChatList() {
                 }
             }
         });
+
+        let containerConversation = $("#chat-conversation-ul");
+        if (containerConversation.length > 0) {
+            let dateTimeLastReplyActiveChat = $('#chat-timeStampLastReply').val();
+            if (dateTimeLastReplyActiveChat > 0) {
+                let countdownTime = moment.unix(dateTimeLastReplyActiveChat).add(24, 'hours').utc(),
+                    timeRemaining = countdownTime.diff(moment.utc(), 'seconds');
+
+                if (timeRemaining > 0) {
+                    let hours = Math.floor(timeRemaining / 3600),
+                        minutes = Math.floor((timeRemaining % 3600) / 60),
+                        seconds = timeRemaining % 60;
+
+                    $('#chat-topbar-badgeSession').html(`${("00" + hours).slice(-2)}:${("00" + minutes).slice(-2)}:${("00" + seconds).slice(-2)}`).removeClass('bg-danger').addClass('bg-success');
+                    $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', false);
+                } else {
+                    $('#chat-topbar-badgeSession').html('Inactive Session').removeClass('bg-success').addClass('bg-danger');
+                    $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
+                }
+            }
+        }
+
     }, 1000);
 }
 

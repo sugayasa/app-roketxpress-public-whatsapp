@@ -60,22 +60,24 @@ function getDataChatList(page = 1) {
                     $.each(dataChatList, function (index, arrayChat) {
                         var totalUnreadMsg = arrayChat.TOTALUNREADMESSAGE;
                         totalUnreadMsgElem = totalUnreadMsg > 0 ? '<div class="unread-message"><span class="badge badge-soft-danger rounded-pill">' + totalUnreadMsg + '</span></div>' : '';
-                        rows += '<li class="unread chatList-item" data-idChatList="' + arrayChat.IDCHATLIST + '" data-timestamp="' + arrayChat.DATETIMELASTMESSAGE + '">' +
-                            '<a href="#" >' +
-                            '<div class="d-flex">' +
-                            '<div class="chat-user-img align-self-center me-3 ms-0">' +
-                            '<div class="avatar-xs">' +
-                            '<span class="avatar-title rounded-circle bg-primary-subtle text-primary">' + arrayChat.NAMEALPHASEPARATOR + '</span>' +
-                            '</div>' +
-                            '</div>' +
-                            '<div class="flex-grow-1 overflow-hidden">' +
-                            '<h5 class="text-truncate font-size-15 mb-1">' + arrayChat.NAMEFULL + '</h5>' +
-                            '<p class="chat-user-message text-truncate mb-0">' + arrayChat.LASTMESSAGE + '</p>' +
-                            '</div>' +
-                            '<div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>' + totalUnreadMsgElem +
-                            '</div>' +
-                            '</a>' +
-                            '</li>';
+                        rows += '<li class="unread chatList-item" data-idChatList="' + arrayChat.IDCHATLIST + '" data-timestamp="' + arrayChat.DATETIMELASTMESSAGE + '" data-datetimelastreply="' + arrayChat.DATETIMELASTREPLY + '">\
+                                    <a href="#" > \
+                                        <div class="d-flex">\
+                                            <div class="chat-user-img align-self-center me-3 ms-0">\
+                                                <div class="avatar-xs">\
+                                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary">'+ arrayChat.NAMEALPHASEPARATOR + '</span>\
+                                                </div>\
+                                                <span class="user-status"></span>\
+                                            </div>\
+                                            <div class="flex-grow-1 overflow-hidden">\
+                                                <h5 class="text-truncate font-size-15 mb-1">'+ arrayChat.NAMEFULL + '</h5>\
+                                                <p class="chat-user-message text-truncate mb-0">' + arrayChat.LASTMESSAGE + '</p>\
+                                            </div>\
+                                            <div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>\
+                                            ' + totalUnreadMsgElem + '\
+                                        </div>\
+                                    </a>\
+                                </li> ';
                         if (index == 0 && idContact != '') firstIdChatList = arrayChat.IDCHATLIST;
                     });
                     break;
@@ -120,6 +122,7 @@ function activateOnClickChatListItem(firstIdChatList) {
 
     if (firstIdChatList != null) {
         setChatContentStarterElement();
+        $('.chatList-item[data-idchatlist=' + firstIdChatList + ']').addClass('active');
         generateChatThread(firstIdChatList);
     }
     activateOnClickPillsItem();
@@ -169,6 +172,7 @@ function generateChatThread(idChatList) {
                     $("#profile-sidebar-phoneNumber").html('+' + detailContact.PHONENUMBER);
                     $("#profile-sidebar-countryContinent").html(detailContact.COUNTRYNAME + ", " + detailContact.CONTINENTNAME);
                     $("#profile-sidebar-email").html(detailContact.EMAILS);
+                    $("#chat-timeStampLastReply").val(detailContact.DATETIMELASTREPLY);
                     $("#chat-idContact").val(detailContact.IDCONTACT);
 
                     $.each(listChatThread, function (index, arrayChatThread) {

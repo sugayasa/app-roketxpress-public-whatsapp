@@ -1,8 +1,10 @@
 var defaultListOfQuestionsPlaceholder = '<span id="messagePreview-listOfQuestions">|| List of questions ||</span>',
     listTemplateMessageReservation = [],
-    elemEmptyTemplateList = '<li class="list-group-item text-muted text-center" id="listTemplateMessage-emptyTemplateList">' +
-        '<div role="alert" class="alert alert-warning text-center py-2 mb-0"><span class="text-muted">No template available for this reservation</span></div>' +
-        '</li>';
+    elemEmptyTemplateList =
+        '<li class="list-group-item text-muted text-center" id="listTemplateMessage-emptyTemplateList">\
+            <div role="alert" class="alert alert-warning text-center py-2 mb-0"><span class="text-muted">No template available for this reservation</span></div>\
+        </li>';
+
 if (contactFunc == null) {
     var contactFunc = function () {
         $(document).ready(function () {
@@ -64,13 +66,14 @@ function getDataContact(page = 1) {
                     askQuestionTemplateData = responseJSON.askQuestionTemplate;
                     $.each(dataContact, function (index, arrayContact) {
                         var emailAddress = arrayContact.EMAILS == '' || arrayContact.EMAILS == '-' ? '' : ' | ' + arrayContact.EMAILS;
-                        rows += '<li class="contact-item" data-idContact="' + arrayContact.IDCONTACT + '">' +
+                        rows += '<li class="contact-item" data-idContact="' + arrayContact.IDCONTACT + '" data-idChatList="' + arrayContact.IDCHATLIST + '" data-timeStampLastReply="' + arrayContact.DATETIMELASTREPLY + '">' +
                             '<a href="#">' +
                             '<div class="d-flex">' +
                             '<div class="chat-user-img align-self-center me-3 ms-0">' +
                             '<div class="avatar-xs">' +
                             '<span class="avatar-title rounded-circle bg-primary-subtle text-primary">' + arrayContact.NAMEALPHASEPARATOR + '</span >' +
                             '</div>' +
+                            '<span class="user-status"></span>' +
                             '</div>' +
                             '<div class="flex-grow-1 overflow-hidden">' +
                             '<h5 class="text-truncate font-size-15 mb-1">' + arrayContact.NAMEFULL + '</h5>' +
@@ -145,9 +148,10 @@ function getDetailContact(idContact) {
         },
         beforeSend: function () {
             NProgress.set(0.4);
+            setInactiveSession();
+            $("#wrapper-contactDetails").attr("data-idChatList", "");
             $("#detailContact-fullname").html("-");
             $("#detailContact-phoneNumberCountry, #detailContact-email").html("| -");
-            $("#detailContact-btnSendMessage").addClass('d-none').off('click');
             $("#detailContact-invalidWhatsAppAcountAlert").addClass('d-none');
             $("#detailContact-totalReservation").html("0 Total reservation(s)");
             $(".detailContact-badgeSource").remove();
@@ -160,16 +164,19 @@ function getDetailContact(idContact) {
             switch (jqXHR.status) {
                 case 200:
                     var detailContact = responseJSON.detailContact,
+                        idChatList = detailContact.IDCHATLIST,
                         arrSource = JSON.parse(detailContact.ARRAYSOURCE),
                         isChatSessionActive = responseJSON.isChatSessionActive,
                         isValidWhatsAppAccount = detailContact.ISVALIDWHATSAPP,
+                        timeStampLastReply = detailContact.TIMESTAMPLASTREPLY,
                         badgeSource = rowDetailReservation = '';
                     listDetailReservation = responseJSON.listDetailReservation;
 
+                    $("#wrapper-contactDetails").attr("data-idChatList", idChatList);
                     $("#detailContact-fullname").html(detailContact.NAMEFULL);
                     $("#detailContact-phoneNumberCountry").html("| +" + detailContact.PHONENUMBER + " (" + detailContact.COUNTRYNAME + ", " + detailContact.CONTINENTNAME + ")");
                     $("#detailContact-email").html("| " + detailContact.EMAILS);
-                    $("#detailContact-lastReplyDateTime").html("| " + (detailContact.DATETIMELASTREPLY == '' ? '-' : detailContact.DATETIMELASTREPLY));
+                    $("#detailContact-iconSession").attr('data-timeStampLastReply', timeStampLastReply);
                     $("#detailContact-totalReservation").html(detailContact.TOTALRESERVATION + " Total reservation(s)");
                     if (isValidWhatsAppAccount == -1) $("#detailContact-invalidWhatsAppAcountAlert").removeClass('d-none');
 
@@ -225,59 +232,61 @@ function getDetailContact(idContact) {
                         }
 
                         let classMarginTop = index == 0 ? '' : 'mt-2';
-                        rowDetailReservation += '<div class="card bg-light2 ' + classMarginTop + ' mb-2 w-100 rounded-3 listReservationCard" data-idReservation="' + idReservation + '">' +
-                            '<div class="card-body p-4" >' +
-                            '<div class="row">' +
-                            '<div class="col-lg-8 col-sm-6 border-bottom pb-3 mb-3"><h6 class="mb-0 listReservationCard-reservationTitle">' + arrayReservation.RESERVATIONTITLE + '</h6></div>' +
-                            '<div class="col-lg-4 col-sm-6 border-bottom pb-3 mb-3 text-end"><h6 class="mb-0 listReservationCard-sourceName">' + arrayReservation.SOURCENAME + '</h6></div>' +
-                            '<div class="col-lg-4 col-sm-12">' +
-                            '<div class="row">' +
-                            '<b class="text-muted mb-3 listReservationCard-dateTimeStr">' + reservationDateTimeStr + '</b><br />' +
-                            '<span class="d-none listReservationCard-pickupTime">' + arrayReservation.RESERVATIONTIMESTARTSTR + '</span>' +
-                            '<h6 class="mb-0">Duration</h6>' +
-                            '<p class="text-muted listReservationCard-durationOfDay">' + arrayReservation.DURATIONOFDAY + ' Day(s)</p>' +
-                            '<h6 class="mb-0">Pax</h6>' +
-                            '<ul class="list-unstyled text-muted">' +
-                            '<li class="list-item listReservationCard-numberOfAdult"> ' + arrayReservation.NUMBEROFADULT + ' Adult</li>' +
-                            '<li class="list-item listReservationCard-numberOfChild"> ' + arrayReservation.NUMBEROFCHILD + ' Child</li>' +
-                            '<li class="list-item listReservationCard-numberOfInfant"> ' + arrayReservation.NUMBEROFINFANT + ' Infant</li>' +
-                            '</ul>' +
-                            '<h6 class="mb-0">Area</h6>' +
-                            '<p class="text-muted listReservationCard-areaName">' + areaName + '</p>' +
-                            '</div>' +
-                            '</div>' +
-                            '<div class="col-lg-4 col-sm-12">' +
-                            '<div class="row" >' +
-                            '<h6 class="mb-0">Hotel</h6>' +
-                            '<p class="text-muted listReservationCard-hotelName">' + arrayReservation.HOTELNAME + '</p>' +
-                            '<h6 class="mb-0">Pick Up</h6>' +
-                            '<p class="text-muted listReservationCard-pickUpLocation">' + arrayReservation.PICKUPLOCATION + '</p>' +
-                            '<h6 class="mb-0">Drop Off</h6>' +
-                            '<p class="text-muted listReservationCard-dropOffLocation">' + arrayReservation.DROPOFFLOCATION + '</p>' +
-                            '<h6 class="mb-0">Tour Plan</h6>' +
-                            '<p class="text-muted listReservationCard-tourPlan">' + arrayReservation.TOURPLAN + '</p>' +
-                            '</div>' +
-                            '</div>' +
-                            '<div class="col-lg-4 col-sm-12">' +
-                            '<div class="row">' +
-                            '<h6 class="mb-0">Booking Code</h6>' +
-                            '<p class="text-muted listReservationCard-bookingCode">' + arrayReservation.BOOKINGCODE + '</p>' +
-                            '<h6 class="mb-0">Remark</h6>' +
-                            '<p class="text-muted listReservationCard-remark">' + arrayReservation.REMARK + '</p>' +
-                            '<h6 class="mb-0">Special Request</h6>' +
-                            '<p class="text-muted listReservationCard-specialRequest">' + arrayReservation.SPECIALREQUEST + '</p>' +
-                            '</div>' +
-                            '</div>' +
-                            '<div class="col-sm-12 border-top pt-3 mt-3 text-end">' +
-                            btnAskQuestion +
-                            btnSendTemplateMessage +
-                            '</div> ' +
-                            '</div> ' +
-                            '</div>' +
-                            '</div>';
+                        rowDetailReservation +=
+                            '<div class="card bg-light2 ' + classMarginTop + ' mb-2 w-100 rounded-3 listReservationCard" data-idReservation="' + idReservation + '">\
+                                <div class="card-body p-4" >\
+                                    <div class="row">\
+                                        <div class="col-lg-8 col-sm-6 border-bottom pb-3 mb-3"><h6 class="mb-0 listReservationCard-reservationTitle">' + arrayReservation.RESERVATIONTITLE + '</h6></div>\
+                                            <div class="col-lg-4 col-sm-6 border-bottom pb-3 mb-3 text-end">\
+                                                <h6 class="mb-0 listReservationCard-sourceName">' + arrayReservation.SOURCENAME + '</h6>\
+                                            </div>\
+                                            <div class="col-lg-4 col-sm-12">\
+                                                <div class="row">\
+                                                    <b class="text-muted mb-3 listReservationCard-dateTimeStr">' + reservationDateTimeStr + '</b><br />\
+                                                    <span class="d-none listReservationCard-pickupTime">' + arrayReservation.RESERVATIONTIMESTARTSTR + '</span>\
+                                                    <h6 class="mb-0">Duration</h6>\
+                                                    <p class="text-muted listReservationCard-durationOfDay">' + arrayReservation.DURATIONOFDAY + ' Day(s)</p>\
+                                                    <h6 class="mb-0">Pax</h6>\
+                                                    <ul class="list-unstyled text-muted">\
+                                                        <li class="list-item listReservationCard-numberOfAdult"> ' + arrayReservation.NUMBEROFADULT + ' Adult</li>\
+                                                        <li class="list-item listReservationCard-numberOfChild"> ' + arrayReservation.NUMBEROFCHILD + ' Child</li>\
+                                                        <li class="list-item listReservationCard-numberOfInfant"> ' + arrayReservation.NUMBEROFINFANT + ' Infant</li>\
+                                                    </ul>\
+                                                    <h6 class="mb-0">Area</h6>\
+                                                    <p class="text-muted listReservationCard-areaName">' + areaName + '</p>\
+                                                </div>\
+                                            </div>\
+                                            <div class="col-lg-4 col-sm-12">\
+                                                <div class="row" >\
+                                                    <h6 class="mb-0">Hotel</h6>\
+                                                    <p class="text-muted listReservationCard-hotelName">' + arrayReservation.HOTELNAME + '</p>\
+                                                    <h6 class="mb-0">Pick Up</h6>\
+                                                    <p class="text-muted listReservationCard-pickUpLocation">' + arrayReservation.PICKUPLOCATION + '</p>\
+                                                    <h6 class="mb-0">Drop Off</h6>\
+                                                    <p class="text-muted listReservationCard-dropOffLocation">' + arrayReservation.DROPOFFLOCATION + '</p>\
+                                                    <h6 class="mb-0">Tour Plan</h6>\
+                                                    <p class="text-muted listReservationCard-tourPlan">' + arrayReservation.TOURPLAN + '</p>\
+                                                </div>\
+                                            </div>\
+                                            <div class="col-lg-4 col-sm-12">\
+                                                <div class="row">\
+                                                <h6 class="mb-0">Booking Code</h6>\
+                                                <p class="text-muted listReservationCard-bookingCode">' + arrayReservation.BOOKINGCODE + '</p>\
+                                                <h6 class="mb-0">Remark</h6>\
+                                                <p class="text-muted listReservationCard-remark">' + arrayReservation.REMARK + '</p>\
+                                                <h6 class="mb-0">Special Request</h6>\
+                                                <p class="text-muted listReservationCard-specialRequest">' + arrayReservation.SPECIALREQUEST + '</p>\
+                                            </div>\
+                                        </div>\
+                                        <div class="col-sm-12 border-top pt-3 mt-3 text-end">' + btnAskQuestion + btnSendTemplateMessage + '</div > \
+                                    </div > \
+                                </div >\
+                            </div > ';
                     });
+
                     $("#simpleScrollBar-listReservation").html(rowDetailReservation);
                     refreshSimpleScrollBarListReservation();
+                    activateCounterChatSession();
                     activateOnClickBtnAskQuestion(idContact, detailContact.PHONENUMBER);
                     activateOnClickBtnTemplateMessage(idContact, detailContact.PHONENUMBER);
                     break;
@@ -298,6 +307,52 @@ function refreshSimpleScrollBarListReservation() {
         reservationListHeight = sideMenuHeight - contactDetailsHeight - 40;
     $("#simpleScrollBar-listReservation").css('height', reservationListHeight + 'px');
     $('#simpleScrollBar-listReservation').sScrollBar();
+}
+
+function activateCounterChatSession() {
+    clearInterval(intervalId);
+    intervalId = setInterval(function () {
+        let timeStampLastReply = $("#detailContact-iconSession").attr('data-timeStampLastReply');
+        if (timeStampLastReply > 0) {
+            let countdownTime = moment.unix(timeStampLastReply).add(24, 'hours').utc(),
+                timeRemaining = countdownTime.diff(moment.utc(), 'seconds');
+
+            if (timeRemaining > 0) {
+                let hours = Math.floor(timeRemaining / 3600),
+                    minutes = Math.floor((timeRemaining % 3600) / 60),
+                    seconds = timeRemaining % 60;
+
+                $('#detailContact-badgeSession').html(
+                    '| <span class="badge text-white font-size-12 align-middle bg-success">\
+                    ' + `${("00" + hours).slice(-2)}:${("00" + minutes).slice(-2)}:${("00" + seconds).slice(-2)}` + '\
+                    </span>');
+                $("#detailContact-iconSession").removeClass('text-danger').addClass('text-success');
+            } else {
+                setInactiveSession();
+            }
+        } else {
+            setInactiveSession();
+        }
+
+        let elemContactItem = $('.contact-item'),
+            timeStampNow = moment.utc();
+        elemContactItem.each(function (index, value) {
+            let timeStampLastReply = $(this).attr('data-timeStampLastReply');
+            if (timeStampLastReply > 0) {
+                if (Math.abs(timeStampNow.diff(moment.unix(timeStampLastReply), 'seconds')) < (60 * 60 * 24)) {
+                    $(this).find('div.chat-user-img').addClass('online');
+                } else {
+                    $(this).find('div.chat-user-img').removeClass('online');
+                }
+            }
+        });
+    }, 1000);
+}
+
+function setInactiveSession() {
+    $('#detailContact-badgeSession').html('| <span id="chat-topbar-badgeSession" class="badge text-white font-size-12 align-middle bg-danger">Inactive Session</span>');
+    $("#detailContact-iconSession").removeClass('text-success').addClass('text-danger');
+    $("#detailContact-btnSendMessage").addClass('d-none').off('click');
 }
 
 function activateOnClickBtnAskQuestion(idContact, phoneNumber) {
@@ -324,11 +379,11 @@ function activateOnClickBtnAskQuestion(idContact, phoneNumber) {
                 questionLength = questionClean.length;
 
             if (question != '' && questionLength > 10) {
-                questionItem = '<li class="list-group-item d-flex justify-content-between align-items-center askQuestion-questionItem">' + question +
-                    '<button type="button" class="btn btn-danger btn-sm askQuestion-btnDeleteQuestionItem">' +
-                    '<i class="ri-delete-bin-line"></i>' +
-                    '</button>' +
-                    '</li> ';
+                questionItem = '<li class="list-group-item d-flex justify-content-between align-items-center askQuestion-questionItem">' + question + '\
+                                    <button type="button" class="btn btn-danger btn-sm askQuestion-btnDeleteQuestionItem">\
+                                        <i class="ri-delete-bin-line"></i>\
+                                    </button>\
+                                </li> ';
                 $('#askQuestion-questionList').append(questionItem);
                 $('#askQuestion-emptyQuestionText').addClass('d-none');
                 $('#askQuestion-inputQuestion').val('');
@@ -445,16 +500,17 @@ function generateListTemplateMessage(listTemplateMessage) {
                 case -2: statusTemplateBadge = '<span class="badge bg-info">Not Set</span>'; break;
             }
 
-            elemListTemplateMessage += '<li class="list-group-item list-group-item-action listTemplateMessage-templateOption" data-templateCode="' + arrayTemplateMessage.TEMPLATECODE + '">' +
-                '<div class="d-flex justify-content-between align-items-center">' +
-                '<h6 class="mb-1">' + arrayTemplateMessage.TEMPLATENAME + '</h6>' +
-                statusTemplateBadge +
-                '</div>' +
-                '<div class="d-flex small listTemplateMessage-templateOption-dateTime"> ' +
-                '<span class="me-3" > <i class="ri-calendar-line me-1"></i>Schedule: <strong>' + arrayTemplateMessage.DATETIMESCHEDULE + '</strong></span> ' +
-                '<span> <i class="ri-time-line me-1"></i>Sent: <strong>' + arrayTemplateMessage.DATETIMESENT + '</strong></span> ' +
-                '</div> ' +
-                '</li> ';
+            elemListTemplateMessage +=
+                '<li class="list-group-item list-group-item-action listTemplateMessage-templateOption" data-templateCode="' + arrayTemplateMessage.TEMPLATECODE + '">\
+                    <div class="d-flex justify-content-between align-items-center">\
+                        <h6 class="mb-1">' + arrayTemplateMessage.TEMPLATENAME + '</h6>\
+                        '+ statusTemplateBadge + '\
+                    </div>\
+                    <div class="d-flex small listTemplateMessage-templateOption-dateTime"> \
+                        <span class="me-3" > <i class="ri-calendar-line me-1"></i>Schedule: <strong>' + arrayTemplateMessage.DATETIMESCHEDULE + '</strong></span>\
+                        <span> <i class="ri-time-line me-1"></i>Sent: <strong>' + arrayTemplateMessage.DATETIMESENT + '</strong></span>\
+                    </div >\
+                </li > ';
         });
 
         $("#listTemplateMessage-emptyTemplateList").remove();
@@ -522,16 +578,18 @@ function generateMessagePreviewTemplate(chatTemplateData, elemContainer, emptyWa
             elemContentBody = generateChatElemContentBody(chatTemplateData.CONTENTBODY, chatTemplateData.PARAMETERSBODY),
             elemContentFooter = generateChatElemContentFooter(chatTemplateData.CONTENTFOOTER),
             elemContentButton = generateChatElemContentButton(chatTemplateData.CONTENTBUTTONS);
-        elemMessagePreview = '<div class="ctext-wrap">' +
-            '<div class="ctext-wrap-content text-start"> ' +
-            elemContentHeader + elemContentBody + elemContentFooter + elemContentButton +
-            '</div>' +
-            '</div>';
+        elemMessagePreview =
+            '<div class="ctext-wrap">\
+                <div class="ctext-wrap-content text-start"> \
+                    '+ elemContentHeader + elemContentBody + elemContentFooter + elemContentButton + '\
+                </div >\
+            </div > ';
     } else {
-        elemMessagePreview = '<div class="alert alert-warning text-center py-2 mb-0" role="alert">' +
-            '<i class="ri-error-warning-line me-2 d-block text-center text-muted" style="font-size: 2rem;"></i>' +
-            '<span class="text-muted">' + emptyWarningMessage + '</span>' +
-            '</div>';
+        elemMessagePreview =
+            '<div class="alert alert-warning text-center py-2 mb-0" role="alert">\
+                <i class="ri-error-warning-line me-2 d-block text-center text-muted" style="font-size: 2rem;"></i>\
+                <span class="text-muted">' + emptyWarningMessage + '</span>\
+            </div>';
     }
 
     $("#" + elemContainer).html(elemMessagePreview);
