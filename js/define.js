@@ -2,7 +2,12 @@ var MAIN_URL = window.location.origin,
     API_URL = MAIN_URL,
     ASSET_IMG_URL = MAIN_URL + "/img/",
     devStatus = "development",
-    urlLogout = "";
+    urlLogout = "",
+    arrMediaSound = [
+        "message_sent.mp3",
+        "message_received_active.mp3",
+        "message_received_background.mp3"
+    ];
 
 function clearUserToken() {
     localStorage.removeItem("userToken");

@@ -15,7 +15,29 @@ if (chatFunc == null) {
 $('#filter-searchKeyword').off('keypress');
 $("#filter-searchKeyword").on('keypress', function (e) {
     if (e.which == 13) {
+        if ($(this).val() == '') {
+            $('#filter-isSearchActive').val(false);
+        } else {
+            $('#filter-isSearchActive').val(true);
+            $('#filter-idContact').val("");
+        }
         getDataChatList();
+    }
+});
+
+$('#filter-searchKeyword').off('input');
+$("#filter-searchKeyword").on('input', function (e) {
+    let inputValue = $(this).val();
+    if (inputValue != '') {
+        $('.chat-search-box .input-group-append').off('click');
+        $('.chat-search-box .input-group-append').removeClass('d-none').on('click', function (e) {
+            $(this).addClass('d-none')
+            $('#filter-searchKeyword').val('');
+            $('#filter-isSearchActive').val(false);
+            getDataChatList();
+        });
+    } else {
+        $('.chat-search-box .input-group-append').addClass('d-none').off('click');
     }
 });
 
@@ -172,6 +194,7 @@ function generateChatThread(idChatList) {
                     $("#profile-sidebar-phoneNumber").html('+' + detailContact.PHONENUMBER);
                     $("#profile-sidebar-countryContinent").html(detailContact.COUNTRYNAME + ", " + detailContact.CONTINENTNAME);
                     $("#profile-sidebar-email").html(detailContact.EMAILS);
+                    $("#chat-idChatList").val(idChatList);
                     $("#chat-timeStampLastReply").val(detailContact.DATETIMELASTREPLY);
                     $("#chat-idContact").val(detailContact.IDCONTACT);
 
@@ -346,8 +369,12 @@ function sendMessage() {
             $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
         },
         complete: function (jqXHR, textStatus) {
+            var responseJSON = jqXHR.responseJSON;
             switch (jqXHR.status) {
                 case 200:
+                    let currentTimeStamp = responseJSON.currentTimeStamp;
+                    playStoredAudio("message_sent");
+                    localStorage.setItem('lastNotifTimeStamp', currentTimeStamp);
                     resetFocusChatInputTextMessage();
                     break;
                 default:

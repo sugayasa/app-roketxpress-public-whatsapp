@@ -84,13 +84,47 @@ $(document).ready(function () {
                 default:
                     break;
             }
+            localStorage.setItem('appVisibility', true);
         } else {
             clearInterval(intervalId);
+            localStorage.setItem('appVisibility', false);
         }
     });
 
+    if (typeof arrMediaSound !== 'undefined' && arrMediaSound.length > 0) {
+        arrMediaSound.forEach(function (value) {
+            let key = value.replace(/\.[^/.]+$/, "");
+            if (localStorage.getItem(key) === null) {
+                downloadAndStoreMedia(baseURLAssetsSound + value, key);
+            }
+        });
+
+    }
     $('.menu-item').first().click();
 });
+
+function downloadAndStoreMedia(url, key) {
+    fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            let reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = function () {
+                localStorage.setItem(key, reader.result);
+            };
+        })
+        .catch(error => console.error("Download failed : " + url, error));
+}
+
+function playStoredAudio(key) {
+    let audioData = localStorage.getItem(key);
+    if (audioData) {
+        let audio = new Audio(audioData);
+        audio.play();
+    } else {
+        console.error("Media file not found! :: " + key);
+    }
+}
 
 function updateUnreadMessageCountOnActiveVisibilityWindow() {
     const containerConversation = $("#chat-conversation-ul");
