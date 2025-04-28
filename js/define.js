@@ -47,6 +47,17 @@ function getUserTimeZoneOffset() {
     return timezoneOffset;
 }
 
+function mergeDataSend(dataMerge = null) {
+    var hardwareID = getHardwareID(),
+        userTimeZoneOffset = getUserTimeZoneOffset(),
+        defaultDataSend = { hardwareID: hardwareID, userTimeZoneOffset: userTimeZoneOffset },
+        dataSend =
+            dataMerge == null
+                ? $.extend({}, defaultDataSend)
+                : $.extend({}, dataMerge, defaultDataSend);
+    return JSON.stringify(dataSend);
+}
+
 var getUrlParameter = function getUrlParameter(sParam) {
     var sPageURL = window.location.search.substring(1),
         sURLVariables = sPageURL.split("&"),

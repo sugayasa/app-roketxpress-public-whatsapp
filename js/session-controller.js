@@ -225,17 +225,6 @@ function setUserToken(jqXHR, showWarningModal = true, defaultToken) {
     return true;
 }
 
-function mergeDataSend(dataMerge = null) {
-    var hardwareID = getHardwareID(),
-        userTimeZoneOffset = getUserTimeZoneOffset(),
-        defaultDataSend = { hardwareID: hardwareID, userTimeZoneOffset: userTimeZoneOffset },
-        dataSend =
-            dataMerge == null
-                ? $.extend({}, defaultDataSend)
-                : $.extend({}, dataMerge, defaultDataSend);
-    return JSON.stringify(dataSend);
-}
-
 function createWarningElement(msg) {
     return '<div class="alert alert-dark alert-dismissible fade show" role="alert" id="warning-element">' +
         '<p class="mb-0">' + msg + '</p>' +

@@ -6,6 +6,7 @@ if (userAdminFunc == null) {
             defaultNoLinkedAccountName = '<i class="ri-error-warning-line me-2"></i>No linked account';
             setOptionHelper('filterUserAdmin-optionLevelUserAdmin', 'dataUserAdminLevel');
             setOptionHelper('editorUserAdmin-optionLevelUserAdmin', 'dataUserAdminLevel');
+            activatePasswordVisibility();
             getDataUserAdmin();
         });
     }
@@ -265,21 +266,6 @@ $('#editorUserAdmin-optionLevelUserAdmin').on('change', function (e) {
                 elemListMenu.find('.editorUserAdmin-menuListAvailableIcon').removeClass('ri-close-line text-danger').addClass('ri-check-line text-success');
             }
         });
-    }
-});
-
-$('.editorUserAdmin-toggleVisibility').off('click');
-$('.editorUserAdmin-toggleVisibility').on('click', function (e) {
-    const passwordInput = $(this).closest('.input-group').find('input.form-control'),
-        passwordIcon = $(this).find('.ri-eye-line, .ri-eye-off-line'),
-        passwordInputType = passwordInput.attr('type');
-
-    if (passwordInputType === 'password') {
-        passwordInput.attr('type', 'text');
-        passwordIcon.removeClass('ri-eye-off-line').addClass('ri-eye-line');
-    } else {
-        passwordInput.attr('type', 'password');
-        passwordIcon.removeClass('ri-eye-line').addClass('ri-eye-off-line');
     }
 });
 

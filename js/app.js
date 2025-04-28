@@ -26,71 +26,176 @@ $(document).ready(function () {
         image: {
             verticalFit: !0
         }
-    }), $("#user-status-carousel").owlCarousel({
-        items: 4,
-        loop: !1,
-        margin: 16,
-        nav: !1,
-        dots: !1
-    }), $("#chatinputmorelink-carousel").owlCarousel({
-        items: 2,
-        loop: !1,
-        margin: 16,
-        nav: !1,
-        dots: !1,
-        responsive: {
-            0: {
-                items: 2
-            },
-            600: {
-                items: 5,
-                nav: !1
-            },
-            992: {
-                items: 8
+    }),
+        $("#user-status-carousel").owlCarousel({
+            items: 4,
+            loop: !1,
+            margin: 16,
+            nav: !1,
+            dots: !1
+        }),
+        $("#chatinputmorelink-carousel").owlCarousel({
+            items: 2,
+            loop: !1,
+            margin: 16,
+            nav: !1,
+            dots: !1,
+            responsive: {
+                0: {
+                    items: 2
+                },
+                600: {
+                    items: 5,
+                    nav: !1
+                },
+                992: {
+                    items: 8
+                }
             }
-        }
-    }), $(".menu-item").on("click", function () {
-        hideModalResetActiveMenuLinkSetLoader();
+        }),
+        $(".menu-item").on("click", function () {
+            hideModalResetActiveMenuLinkSetLoader();
 
-        var alias = $(this).attr("data-alias"),
-            url = $(this).attr("data-url");
+            var alias = $(this).attr("data-alias"),
+                url = $(this).attr("data-url");
 
-        setLocalStorageMenuItem(url, alias);
-        $(this).find('a.nav-link').addClass('active');
+            setLocalStorageMenuItem(url, alias);
+            $(this).find('a.nav-link').addClass('active');
 
-        if (localStorage.getItem("form_" + alias) === null) {
-            getViewURL(url, alias);
-        } else {
-            var responseJSON = localStorage.getItem("form_" + alias);
-            renderMainView(JSON.parse(responseJSON));
-        }
-
-        if (typeof intervalId !== 'undefined') {
-            clearInterval(intervalId);
-        }
-    }), $(document).on("visibilitychange", function () {
-        if (document.visibilityState === "visible") {
-            const activeMenu = $(".nav-link.active").closest('li').attr('id');
-
-            switch (activeMenu) {
-                case 'menuCHT':
-                    counterTimeChatList();
-                    updateUnreadMessageCountOnActiveVisibilityWindow();
-                    break;
-                case 'menuCNCT':
-                    activateCounterChatSession();
-                    break;
-                default:
-                    break;
+            if (localStorage.getItem("form_" + alias) === null) {
+                getViewURL(url, alias);
+            } else {
+                var responseJSON = localStorage.getItem("form_" + alias);
+                renderMainView(JSON.parse(responseJSON));
             }
-            localStorage.setItem('appVisibility', true);
-        } else {
-            clearInterval(intervalId);
-            localStorage.setItem('appVisibility', false);
-        }
-    });
 
+            if (typeof intervalId !== 'undefined') {
+                clearInterval(intervalId);
+            }
+        }),
+        $(document).on("visibilitychange", function () {
+            if (document.visibilityState === "visible") {
+                const activeMenu = $(".nav-link.active").closest('li').attr('id');
+
+                switch (activeMenu) {
+                    case 'menuCHT':
+                        counterTimeChatList();
+                        updateUnreadMessageCountOnActiveVisibilityWindow();
+                        break;
+                    case 'menuCNCT':
+                        activateCounterChatSession();
+                        break;
+                    default:
+                        break;
+                }
+                localStorage.setItem('appVisibility', true);
+            } else {
+                clearInterval(intervalId);
+                localStorage.setItem('appVisibility', false);
+            }
+        }),
+        $('#modal-userProfile').off('show.bs.modal'),
+        $('#modal-userProfile').on('show.bs.modal', function () {
+            $.ajax({
+                type: 'POST',
+                url: baseURL + "access/detailProfileSetting",
+                contentType: 'application/json',
+                dataType: 'json',
+                cache: false,
+                data: mergeDataSend(),
+                xhrFields: { withCredentials: true },
+                headers: { Authorization: "Bearer " + getUserToken() },
+                beforeSend: function () {
+                    NProgress.set(0.4);
+                    $("#window-loader").modal("show");
+                },
+                complete: function (jqXHR, textStatus) {
+                    var responseJSON = jqXHR.responseJSON;
+                    switch (jqXHR.status) {
+                        case 200:
+                            let detailUserAdmin = responseJSON.detailUserAdmin;
+                            $("#userProfile-name").val(detailUserAdmin.NAME);
+                            $("#userProfile-username").val(detailUserAdmin.USERNAME);
+                            activatePasswordVisibility();
+                            break;
+                        case 400:
+                        default:
+                            generateWarningMessageResponse(jqXHR);
+                            break;
+                    }
+                }
+            }).always(function (jqXHR, textStatus) {
+                $("#window-loader").modal("hide");
+                NProgress.done();
+                setUserToken(jqXHR);
+            });
+        }),
+        $('#form-userProfile').off('submit'),
+        $('#form-userProfile').on('submit', function (e) {
+            e.preventDefault();
+            const name = $('#userProfile-name').val(),
+                username = $('#userProfile-username').val(),
+                currentPassword = $('#userProfile-oldPassword').val(),
+                newPassword = $('#userProfile-newPassword').val(),
+                repeatPassword = $('#userProfile-repeatNewPassword').val();
+            let dataSend = {
+                name: name,
+                username: username,
+                currentPassword: currentPassword,
+                newPassword: newPassword,
+                repeatPassword: repeatPassword
+            };
+
+            if (name == "" || username == "") {
+                showWarning("Name and username is required!");
+            } else if ((currentPassword != "" || newPassword != "" || repeatPassword != "") && (currentPassword == "" || newPassword == "" || repeatPassword == "")) {
+                showWarning("To change your password, please ensure to complete the fields for the current password, new password, and new password repeat");
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: baseURL + "access/saveDetailProfileSetting",
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    cache: false,
+                    data: mergeDataSend(dataSend),
+                    xhrFields: { withCredentials: true },
+                    headers: { Authorization: "Bearer " + getUserToken() },
+                    beforeSend: function () {
+                        NProgress.set(0.4);
+                        $("#window-loader").modal("show");
+                    },
+                    complete: function (jqXHR, textStatus) {
+                        var responseJSON = jqXHR.responseJSON;
+                        switch (jqXHR.status) {
+                            case 200:
+                                let relogin = responseJSON.relogin,
+                                    token = '';
+
+                                try {
+                                    token = responseJSON.token;
+                                } catch (err) {
+                                    token = jqXHR.token;
+                                }
+
+                                $("#modal-userProfile").modal("hide");
+                                showToast('success', jqXHR);
+                                if (relogin) window.location.replace(MAIN_URL + "/access/logout/" + token);
+                                break;
+                            case 400:
+                            default:
+                                generateWarningMessageResponse(jqXHR);
+                                break;
+                        }
+                    }
+                }).always(function (jqXHR, textStatus) {
+                    $("#window-loader").modal("hide");
+                    NProgress.done();
+                    setUserToken(jqXHR);
+                });
+            }
+        });
+
+    let redirectDestinationMenu = localStorage.getItem('redirectDestinationMenu');
     if (typeof arrMediaSound !== 'undefined' && arrMediaSound.length > 0) {
         arrMediaSound.forEach(function (value) {
             let key = value.replace(/\.[^/.]+$/, "");
@@ -98,9 +203,24 @@ $(document).ready(function () {
                 downloadAndStoreMedia(baseURLAssetsSound + value, key);
             }
         });
-
     }
-    $('.menu-item').first().click();
+
+    if (typeof redirectDestinationMenu != 'undefined' && redirectDestinationMenu != null && redirectDestinationMenu != '') {
+        let redirectParameters = localStorage.getItem('redirectParameters');
+        redirectParameters = (typeof redirectDestinationMenu != 'undefined' && redirectDestinationMenu != null && redirectDestinationMenu != '') ? JSON.parse(redirectParameters) : [];
+        switch (redirectDestinationMenu) {
+            case "CHT":
+                let phoneNumber = redirectParameters.phoneNumber;
+                openMenuSetCallBack('menuCHT', function () {
+                    $("#filter-searchKeyword").val(phoneNumber);
+                });
+                break;
+            default:
+                $('.menu-item').first().click();
+        }
+    } else {
+        $('.menu-item').first().click();
+    }
 });
 
 function downloadAndStoreMedia(url, key) {
@@ -321,8 +441,9 @@ function updateDataOptionHelper(arrayName, arrayValue) {
 function getMessageResponse(jqXHR) {
     var responseMessage;
     try {
-        var responseJSON = jqXHR.responseJSON;
-        responseMessage = Object.values(responseJSON.messages)[0];
+        var responseJSON = jqXHR.responseJSON,
+            responseMessage = responseJSON.message;
+        if (typeof responseMessage == 'undefined' && responseMessage == null) responseMessage = Object.values(responseJSON.messages)[0];
     } catch (err) {
         responseMessage =
             jqXHR.messages != "" &&
@@ -590,6 +711,23 @@ function counterTimeChatList() {
         }
 
     }, 1000);
+}
+
+function activatePasswordVisibility() {
+    $('.inputPassword-toggleVisibility').off('click');
+    $('.inputPassword-toggleVisibility').on('click', function (e) {
+        const passwordInput = $(this).closest('.input-group').find('input.form-control'),
+            passwordIcon = $(this).find('.ri-eye-line, .ri-eye-off-line'),
+            passwordInputType = passwordInput.attr('type');
+
+        if (passwordInputType === 'password') {
+            passwordInput.attr('type', 'text');
+            passwordIcon.removeClass('ri-eye-off-line').addClass('ri-eye-line');
+        } else {
+            passwordInput.attr('type', 'password');
+            passwordIcon.removeClass('ri-eye-line').addClass('ri-eye-off-line');
+        }
+    });
 }
 
 window.onload = function () {
