@@ -475,8 +475,8 @@ function showWarning(message) {
     $("#modalWarning").modal("show");
 }
 
-function showToast(toastClass, jqXHR) {
-    let toastMessage = getMessageResponse(jqXHR);
+function showToast(toastClass, jqXHROrStringMessage) {
+    let toastMessage = typeof jqXHROrStringMessage == 'string' ? jqXHROrStringMessage : getMessageResponse(jqXHROrStringMessage);
     let iconClass;
 
     $("#liveToast").removeClass("bg-success bg-danger bg-warning bg-info");
@@ -564,8 +564,8 @@ function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatConten
             '<i class="ri-more-2-fill"></i>' +
             '</a>' +
             '<div class="dropdown-menu">' +
-            '<a class="dropdown-item" href="#">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>' +
-            '<a class="dropdown-item" href="#">Forward <i class="ri-chat-forward-line float-end text-muted"></i></a>' +
+            '<a class="dropdown-item chatContentWrap-optionButtonCopy" href="#" data-idMessage="' + idMessage + '">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>' +
+            // '<a class="dropdown-item" href="#">Forward <i class="ri-chat-forward-line float-end text-muted"></i></a>' +
             '</div>' +
             '</div>' : '',
         classIconACK = '';
@@ -604,6 +604,22 @@ function generateClassContentLongText(arrayChatThread) {
     });
 
     return isContainsLongText ? 'w-75 mw-100' : '';
+}
+
+function activateChatContentOptionButton() {
+    $('.chatContentWrap-optionButtonCopy').off('click');
+    $('.chatContentWrap-optionButtonCopy').on('click', function (e) {
+        let idMessage = $(this).attr('data-idMessage'),
+            elemCtextWrap = $('.ctext-wrap[data-idMessage=' + idMessage + ']');
+        if (elemCtextWrap.length > 0) {
+            let textMessage = elemCtextWrap.find('p').first().text();
+            navigator.clipboard.writeText(textMessage).then(function () {
+                showToast('success', 'Message copied to clipboard!');
+            }).catch(function (err) {
+                console.error("Failed to copy text: ", err);
+            });
+        }
+    });
 }
 
 function openMenuSetCallBack(menuId, callback, parameters) {

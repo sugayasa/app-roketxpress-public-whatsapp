@@ -222,6 +222,7 @@ function generateChatThread(idChatList) {
                         }
                     });
                     $("#chat-conversation-ul").html(rowChatThread);
+                    activateChatContentOptionButton();
                     recalculateSimpleBar('chat-conversation', true);
 
                     if (listActiveReservation) {
