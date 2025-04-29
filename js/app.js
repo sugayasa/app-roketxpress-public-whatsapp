@@ -208,16 +208,24 @@ $(document).ready(function () {
     if (typeof redirectDestinationMenu != 'undefined' && redirectDestinationMenu != null && redirectDestinationMenu != '') {
         let redirectParameters = localStorage.getItem('redirectParameters');
         redirectParameters = (typeof redirectDestinationMenu != 'undefined' && redirectDestinationMenu != null && redirectDestinationMenu != '') ? JSON.parse(redirectParameters) : [];
+
+        let phoneNumber = redirectParameters.phoneNumber;
         switch (redirectDestinationMenu) {
             case "CHT":
-                let phoneNumber = redirectParameters.phoneNumber;
                 openMenuSetCallBack('menuCHT', function () {
+                    $("#filter-searchKeyword").val(phoneNumber);
+                });
+                break;
+            case "CNCT":
+                openMenuSetCallBack('menuCNCT', function () {
                     $("#filter-searchKeyword").val(phoneNumber);
                 });
                 break;
             default:
                 $('.menu-item').first().click();
         }
+        localStorage.removeItem("redirectDestinationMenu");
+        localStorage.removeItem("redirectParameters");
     } else {
         $('.menu-item').first().click();
     }

@@ -18,10 +18,8 @@ if (loginRedirectFunc == null) {
                             localStorage.setItem("redirectParameters", parameters);
                             window.location.replace(MAIN_URL);
                             break;
-                        case 401:
-                        case 409:
-                            window.location.replace(MAIN_URL + "/logoutPage");
                         default:
+                            window.location.replace(MAIN_URL + "/logoutPage");
                             break;
                     }
                 }
