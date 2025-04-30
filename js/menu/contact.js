@@ -662,7 +662,9 @@ function generateParametersChatTemplate(parametersTemplate, arrAdditional = []) 
                 arrReturnParameters.push(detailPax); break;
             case "PICKUPTIME": arrReturnParameters.push(typeof reservationProperty.pickupTime === 'undefined' || reservationProperty.pickupTime == '' ? '-' : reservationProperty.pickupTime); break;
             case "PICKUPLOCATION": arrReturnParameters.push(typeof reservationProperty.pickUpLocation === 'undefined' || reservationProperty.pickUpLocation == '' ? '-' : reservationProperty.pickUpLocation); break;
+            case "HOTELNAME": arrReturnParameters.push(typeof reservationProperty.hotelName === 'undefined' || reservationProperty.hotelName == '' ? '-' : reservationProperty.hotelName); break;
             case "REMARK": arrReturnParameters.push(typeof reservationProperty.remark === 'undefined' || reservationProperty.remark == '' ? '-' : reservationProperty.remark); break;
+            case "SPECIALREQUEST": arrReturnParameters.push(typeof reservationProperty.specialRequest === 'undefined' || reservationProperty.specialRequest == '' ? '-' : reservationProperty.specialRequest); break;
             default: break;
         }
     });
