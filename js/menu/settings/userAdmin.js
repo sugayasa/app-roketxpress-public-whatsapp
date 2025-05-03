@@ -311,7 +311,7 @@ $('#editorUserAdmin-form').on('submit', function (e) {
     };
 
     if (idUserAdmin == "" && newPassword != repeatPassword) {
-        showWarning("Password and Repeat Password do not match");
+        showWarning("Password and Repeat Password is not match");
     } else {
         $.ajax({
             type: 'POST',

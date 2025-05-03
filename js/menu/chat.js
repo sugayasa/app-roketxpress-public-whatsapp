@@ -197,6 +197,7 @@ function generateChatThread(idChatList) {
                     $("#chat-idChatList").val(idChatList);
                     $("#chat-timeStampLastReply").val(detailContact.DATETIMELASTREPLY);
                     $("#chat-idContact").val(detailContact.IDCONTACT);
+                    counterTimeChatList();
 
                     $.each(listChatThread, function (index, arrayChatThread) {
                         var chatThreadPosition = arrayChatThread.CHATTHREADPOSITION,

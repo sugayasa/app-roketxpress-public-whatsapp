@@ -728,13 +728,19 @@ function counterTimeChatList() {
                     $('#chat-topbar-badgeSession').html(`${("00" + hours).slice(-2)}:${("00" + minutes).slice(-2)}:${("00" + seconds).slice(-2)}`).removeClass('bg-danger').addClass('bg-success');
                     $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', false);
                 } else {
-                    $('#chat-topbar-badgeSession').html('Inactive Session').removeClass('bg-success').addClass('bg-danger');
-                    $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
+                    setInactiveSessionDisableChatInput();
                 }
+            } else {
+                setInactiveSessionDisableChatInput();
             }
         }
 
     }, 1000);
+}
+
+function setInactiveSessionDisableChatInput() {
+    $('#chat-topbar-badgeSession').html('Inactive Session').removeClass('bg-success').addClass('bg-danger');
+    $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
 }
 
 function activatePasswordVisibility() {

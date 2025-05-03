@@ -177,8 +177,8 @@ function getMenuLevelAdmin(idUserLevel) {
 function refreshSimpleScrollBarListAccessMenu() {
     var sideMenuHeight = $(".side-menu").height(),
         sideMenuHeight = sideMenuHeight <= 80 ? $(document).height() : sideMenuHeight,
-        userLevelDetailsHeight = $("#wrapper-userlevelDetails").height(),
-        listAccessMenuHeight = sideMenuHeight - userLevelDetailsHeight - 20;
+        containerNameDescriptionFormHeight = $("#userLevelDetails-containerNameDescriptionForm").height(),
+        listAccessMenuHeight = sideMenuHeight - containerNameDescriptionFormHeight - 247;
     $("#userLevelDetails-containerTableMenuList").css('height', listAccessMenuHeight + 'px');
     $("#userLevelDetails-containerTableMenuList").sScrollBar();
 }
