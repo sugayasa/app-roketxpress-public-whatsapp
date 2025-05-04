@@ -25,6 +25,11 @@ $("#filter-searchKeyword").on('keypress', function (e) {
     }
 });
 
+$('#chatStatusNav li').off('click');
+$('#chatStatusNav li').on('click', function (e) {
+    getDataChatList();
+});
+
 $('#filter-searchKeyword').off('input');
 $("#filter-searchKeyword").on('input', function (e) {
     let inputValue = $(this).val();
@@ -45,9 +50,11 @@ function getDataChatList(page = 1) {
     var $elemList = $('#list-chatListData'),
         idContact = $('#filter-idContact').val(),
         searchKeyword = $('#filter-searchKeyword').val(),
+        chatType = $('#chatStatusNav li button.nav-link.active').attr('data-chatType'),
         dataSend = {
             page: page,
             searchKeyword: searchKeyword,
+            chatType: chatType,
             idContact: idContact
         };
     $.ajax({
@@ -104,6 +111,12 @@ function getDataChatList(page = 1) {
                     });
                     break;
                 case 404:
+                    let responseMsg = getMessageResponse(jqXHR);
+                    rows = '<li class="text-center text-muted py-3">\
+                                <i class="ri-chat-off-line font-size-24"></i>\
+                                <p class="mt-2">'+ responseMsg + '</p>\
+                            </li>';
+                    break;
                 default:
                     break;
             }
