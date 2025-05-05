@@ -25,11 +25,6 @@ $("#filter-searchKeyword").on('keypress', function (e) {
     }
 });
 
-$('#chatStatusNav li').off('click');
-$('#chatStatusNav li').on('click', function (e) {
-    getDataChatList();
-});
-
 $('#filter-searchKeyword').off('input');
 $("#filter-searchKeyword").on('input', function (e) {
     let inputValue = $(this).val();
@@ -44,6 +39,11 @@ $("#filter-searchKeyword").on('input', function (e) {
     } else {
         $('.chat-search-box .input-group-append').addClass('d-none').off('click');
     }
+});
+
+$('#chatStatusNav li button').off('click');
+$('#chatStatusNav li button').on('click', function (e) {
+    getDataChatList();
 });
 
 function getDataChatList(page = 1) {
@@ -74,6 +74,7 @@ function getDataChatList(page = 1) {
             NProgress.set(0.4);
             $("#btnLoadMoreData").replaceWith(loaderElem);
             recalculateSimpleBar('simpleBar-list-chatList');
+            $('#chatStatusNav li button, #filter-searchKeyword').prop('disabled', true);
         },
         complete: function (jqXHR, textStatus) {
             var responseJSON = jqXHR.responseJSON,
@@ -100,7 +101,7 @@ function getDataChatList(page = 1) {
                                             </div>\
                                             <div class="flex-grow-1 overflow-hidden">\
                                                 <h5 class="text-truncate font-size-15 mb-1">'+ arrayChat.NAMEFULL + '</h5>\
-                                                <p class="chat-user-message text-truncate mb-0">' + arrayChat.LASTMESSAGE + '</p>\
+                                                <p class="chat-user-message text-truncate mb-0">' + arrayChat.LASTSENDERFIRSTNAME + ': ' + arrayChat.LASTMESSAGE + '</p>\
                                             </div>\
                                             <div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>\
                                             ' + totalUnreadMsgElem + '\
@@ -139,7 +140,8 @@ function getDataChatList(page = 1) {
     }).always(function (jqXHR, textStatus) {
         NProgress.done();
         setUserToken(jqXHR);
-        $('#filter-idContact').val('');
+        $('#chatStatusNav li button').prop('disabled', false);
+        $('#filter-searchKeyword, #filter-idContact').val('');
     });
 }
 
