@@ -760,6 +760,218 @@ function activatePasswordVisibility() {
     });
 }
 
+function numberFormat(number) {
+    if (number % 1 == 0) {
+        number = number ? parseInt(number, 10) : 0;
+    }
+    return (number === 0 || number === undefined || number === null) ? "0" : number.toLocaleString("en-US");
+}
+
+function maskNumberInput(
+    minValue = 0,
+    maxValue = false,
+    elemID = false,
+    callback = false
+) {
+    var $input;
+
+    if (elemID === false) {
+        $input = $(".maskNumber");
+    } else {
+        $input = $("#" + elemID);
+    }
+
+    if ($input.val() === "") {
+        $input.val(0);
+    }
+    $input.on("keyup", function (event) {
+        var selection = window.getSelection().toString();
+        if (selection !== '') return;
+        if ($.inArray(event.keyCode, [38, 40, 37, 39]) !== -1) return;
+
+        var $this = $(this);
+        var originalVal = $this.val();
+        var caretPos = this.selectionStart;
+
+        var rawBeforeCaret = originalVal.substring(0, caretPos).replace(/[^0-9.]/g, "");
+        var rawCaretPos = rawBeforeCaret.length;
+
+        var decimalInput = $this.hasClass("decimalInput");
+        var showcomma = $this.hasClass("nocomma") ? false : true;
+        var showzero = $this.hasClass("nozero") ? false : true;
+        var padzeroleft = $this.hasClass("padzeroleft") ? true : false;
+
+        var input = originalVal.replace(/[^0-9.]/g, "");
+
+        if (!decimalInput) {
+            var num = parseInt(input, 10);
+            if (isNaN(num)) num = minValue;
+            num = num < minValue ? minValue : num;
+            num = maxValue !== false && num > maxValue ? maxValue : num;
+            input = num.toString();
+        }
+
+        var formatted;
+        if (!decimalInput) {
+            if (showcomma) {
+                var num = input ? parseInt(input, 10) : 0;
+                formatted = showzero ? (num === 0 ? "0" : num.toLocaleString("en-US")) : (num === 0 ? "" : num.toLocaleString("en-US"));
+            } else {
+                formatted = input;
+            }
+        } else {
+            formatted = input;
+        }
+
+        $this.val(formatted);
+
+        var newCaretPos = 0;
+        var digitCount = 0;
+        for (var i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i])) {
+                digitCount++;
+            }
+            if (digitCount >= rawCaretPos) {
+                newCaretPos = i + 1;
+                break;
+            }
+        }
+
+        if (newCaretPos === 0) {
+            newCaretPos = formatted.length;
+        }
+
+        this.setSelectionRange(newCaretPos, newCaretPos);
+
+        if (typeof callback === "function") {
+            callback(input);
+        }
+    });
+}
+
+function activateCounterFieldEvent() {
+    $('.btn-number').off('click');
+    $('.input-number').off('focusin change keydown');
+
+    $('.btn-number').click(function (e) {
+        e.preventDefault();
+        var fieldName = $(this).attr('data-field'),
+            type = $(this).attr('data-type'),
+            input = $("input[name='" + fieldName + "']"),
+            currentVal = parseInt(input.val());
+
+        if (!isNaN(currentVal)) {
+            if (type == 'minus') {
+                if (currentVal > input.attr('min')) {
+                    input.val(currentVal - 1).change();
+                }
+                if (parseInt(input.val()) == input.attr('min')) {
+                    $(this).attr('disabled', true);
+                }
+            } else if (type == 'plus') {
+                if (currentVal < input.attr('max')) {
+                    input.val(currentVal + 1).change();
+                }
+                if (parseInt(input.val()) == input.attr('max')) {
+                    $(this).attr('disabled', true);
+                }
+            }
+        } else {
+            input.val(0);
+        }
+    });
+
+    $('.input-number').focusin(function () {
+        $(this).data('oldValue', $(this).val());
+    });
+
+    $('.input-number').change(function () {
+        var minValue = parseInt($(this).attr('min')),
+            maxValue = parseInt($(this).attr('max')),
+            valueCurrent = parseInt($(this).val()),
+            name = $(this).attr('name');
+
+        if (valueCurrent >= minValue) {
+            $(".btn-number[data-type='minus'][data-field='" + name + "']").removeAttr('disabled')
+        } else {
+            $(this).val($(this).data('oldValue'));
+        }
+        if (valueCurrent <= maxValue) {
+            $(".btn-number[data-type='plus'][data-field='" + name + "']").removeAttr('disabled')
+        } else {
+            $(this).val($(this).data('oldValue'));
+        }
+    });
+
+    $(".input-number").keydown(function (e) {
+        if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 190]) !== -1 ||
+            (e.keyCode == 65 && e.ctrlKey === true) ||
+            (e.keyCode >= 35 && e.keyCode <= 39)) {
+            return;
+        }
+
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+}
+
+function generateDatePickerElem(parentEl = 'body') {
+    parentEl = typeof parentEl !== 'undefined' && parentEl != null ? parentEl : 'body';
+    $('.input-date-single').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        autoApply: true,
+        parentEl: parentEl,
+        minYear: 2024,
+        maxYear: parseInt(moment().format('YYYY')) + 2,
+        locale: {
+            format: 'DD-MM-YYYY',
+            separator: ' - ',
+            daysOfWeek: [
+                'Sun',
+                'Mon',
+                'Tue',
+                'Wed',
+                'Thu',
+                'Fri',
+                'Sat'
+            ],
+            monthNames: [
+                'January',
+                'February',
+                'March',
+                'April',
+                'May',
+                'June',
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December'
+            ],
+            firstDay: 1
+        }
+    });
+}
+
+function resetSelectedOptionFirstValue(elemID) {
+    if (typeof elemID === 'undefined' || elemID == null || elemID == '') return;
+
+    let arrElemID = Array.isArray(elemID) ? elemID : [elemID];
+
+    for (let i = 0; i < arrElemID.length; i++) {
+        let $input = $("#" + arrElemID[i]);
+        if ($input.length > 0) {
+            let firstValue = $input.find('option').first().val();
+            if (firstValue !== undefined && firstValue !== null) {
+                $input.val(firstValue).change();
+            }
+        }
+    }
+}
+
 window.onload = function () {
     history.pushState(null, null, window.location.href);
 

@@ -7,7 +7,12 @@ if (chatFunc == null) {
                 $(".user-profile-sidebar").show()
             });
             setVerticalCenterContentContainer('content-chat-landing', 150);
+            setOptionHelper('modalEditReservation-timeHour', 'optionHours');
+            setOptionHelper('modalEditReservation-timeMinute', 'optionMinutes');
+            setOptionHelper('modalEditReservation-pickUpArea', 'dataAllAreaType');
             getDataChatList();
+            activateCounterFieldEvent();
+            generateDatePickerElem('.modal');
         });
     }
 }
@@ -244,64 +249,72 @@ function generateChatThread(idChatList) {
                     if (listActiveReservation) {
                         var reservationListElem = '';
                         $.each(listActiveReservation, function (index, arrayActiveReservation) {
-                            var reservationDateTimeStr = arrayActiveReservation.RESERVATIONDATESTARTSTR + " " + arrayActiveReservation.RESERVATIONTIMESTARTSTR,
+                            let classCollapsed = index == 0 ? '' : 'collapsed',
+                                classShow = index == 0 ? 'show' : '',
+                                reservationDateTimeStr = arrayActiveReservation.RESERVATIONDATESTARTSTR + " " + arrayActiveReservation.RESERVATIONTIMESTARTSTR,
                                 areaName = arrayActiveReservation.AREANAME.toLowerCase() == "without transfer" ? "<b class='text-danger'>" + arrayActiveReservation.AREANAME + "</b>" : arrayActiveReservation.AREANAME,
-                                paxDetails = arrayActiveReservation.NUMBEROFADULT + ' Adult, ' + arrayActiveReservation.NUMBEROFCHILD + ' Child, ' + arrayActiveReservation.NUMBEROFINFANT + ' Infant';
+                                paxDetails = arrayActiveReservation.NUMBEROFADULT + ' Adult, ' + arrayActiveReservation.NUMBEROFCHILD + ' Child, ' + arrayActiveReservation.NUMBEROFINFANT + ' Infant',
+                                bookingCode = arrayActiveReservation.BOOKINGCODE;
                             if (arrayActiveReservation.DURATIONOFDAY > 1) {
                                 reservationDateTimeStr = reservationDateTimeStr + " - " + arrayActiveReservation.RESERVATIONDATEENDSTR + " " + arrayActiveReservation.RESERVATIONTIMEENDSTR;
                             }
-                            reservationListElem += '<div class="accordion-item card border reservationListElem mb-2">' +
-                                '<div class="accordion-header" id = "header-' + arrayActiveReservation.BOOKINGCODE + '" >' +
-                                '<button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#reservation-' + arrayActiveReservation.BOOKINGCODE + '" aria-expanded="true" aria-controls="reservation-' + arrayActiveReservation.BOOKINGCODE + '">' +
-                                '<h5 class="font-size-14 m-0"><i class="ri-coupon-fill me-2 ms-0 align-middle d-inline-block"></i> ' + arrayActiveReservation.SOURCENAME + ' - ' + arrayActiveReservation.BOOKINGCODE + '</h5>' +
-                                '</button>' +
-                                '</div>' +
-                                '<div id = "reservation-' + arrayActiveReservation.BOOKINGCODE + '" class="accordion-collapse collapse show" aria-labelledby="header-' + arrayActiveReservation.BOOKINGCODE + '" data-bs-parent="#profile-sidebar-reservationList"> ' +
-                                '<div class="accordion-body"> ' +
-                                '<div>' +
-                                '<h5 class="font-size-14">' + arrayActiveReservation.RESERVATIONTITLE + '</h5>' +
-                                '</div>' +
-                                '<div class="mt-4">' +
-                                '<p class="text-muted mb-1"> Date</p>' +
-                                '<h5 class="font-size-14">' + reservationDateTimeStr + '</h5>' +
-                                '</div>' +
-                                '<div class="mt-4">' +
-                                '<p class="text-muted mb-1"> Pax</p>' +
-                                '<h5 class="font-size-14"> ' + paxDetails + '</h5>' +
-                                '</div>' +
-                                '<div class="mt-4"> ' +
-                                '<p class="text-muted mb-1"> Area</p> ' +
-                                '<h5 class="font-size-14"> ' + areaName + '</h5> ' +
-                                '</div>' +
-                                '<div class="mt-4">' +
-                                '<p class="text-muted mb-1"> Hotel</p>' +
-                                '<h5 class="font-size-14"> ' + arrayActiveReservation.HOTELNAME + '</h5>' +
-                                '</div>' +
-                                '<div class="mt-4">' +
-                                '<p class="text-muted mb-1"> Pick Up</p>' +
-                                '<h5 class="font-size-14"> ' + arrayActiveReservation.PICKUPLOCATION + '</h5>' +
-                                '</div>' +
-                                '<div class="mt-4">' +
-                                '<p class="text-muted mb-1"> Drop Off</p>' +
-                                '<h5 class="font-size-14 mb-0"> ' + arrayActiveReservation.DROPOFFLOCATION + '</h5>' +
-                                '</div> ' +
-                                '<div class="mt-4" > ' +
-                                '<p class="text-muted mb-1" > Tour Plan</p > ' +
-                                '<h5 class="font-size-14 mb-0"> ' + arrayActiveReservation.TOURPLAN + ' </h5 > ' +
-                                '</div> ' +
-                                '<div class="mt-4"> ' +
-                                '<p class="text-muted mb-1"> Remark</p> ' +
-                                '<h5 class="font-size-14 mb-0"> ' + arrayActiveReservation.REMARK + '</h5> ' +
-                                '</div> ' +
-                                '<div class="mt-4"> ' +
-                                '<p class="text-muted mb-1" > Special Request</p> ' +
-                                '<h5 class="font-size-14 mb-0" > ' + arrayActiveReservation.SPECIALREQUEST + '</h5> ' +
-                                '</div> ' +
-                                '</div> ' +
-                                '</div> ' +
-                                '</div> ';
+                            reservationListElem +=
+                                '<div class="accordion-item card border reservationListElem mb-2">\
+                                    <div class="accordion-header" id = "header-' + bookingCode + '" >\
+                                        <button class="accordion-button '+ classCollapsed + '" type="button" data-bs-toggle="collapse" data-bs-target="#reservation-' + bookingCode + '" aria-expanded="true" aria-controls="reservation-' + bookingCode + '">\
+                                            <h5 class="font-size-14 m-0"><i class="ri-coupon-fill me-2 ms-0 align-middle d-inline-block"></i> ' + arrayActiveReservation.SOURCENAME + ' - ' + bookingCode + '</h5>\
+                                        </button>\
+                                    </div>\
+                                    <div id="reservation-' + bookingCode + '" class="accordion-collapse collapse ' + classShow + '" aria-labelledby="header-' + bookingCode + '" data-bs-parent="#profile-sidebar-reservationList">\
+                                        <div class="accordion-body">\
+                                            <div><h5 class="font-size-14 reservationAccordion-title">' + arrayActiveReservation.RESERVATIONTITLE + '</h5></div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1"> Date</p>\
+                                                <h5 class="font-size-14 reservationAccordion-reservationDateTime">' + reservationDateTimeStr + '</h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Pax</p>\
+                                                <h5 class="font-size-14 reservationAccordion-paxDetails"> ' + paxDetails + '</h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Area</p>\
+                                                <h5 class="font-size-14 reservationAccordion-areaName"> ' + areaName + '</h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Hotel</p>\
+                                                <h5 class="font-size-14 reservationAccordion-hotelName"> ' + arrayActiveReservation.HOTELNAME + '</h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Pick Up</p>\
+                                                <h5 class="font-size-14 reservationAccordion-pickUpLocation"> ' + arrayActiveReservation.PICKUPLOCATION + '</h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Drop Off</p>\
+                                                <h5 class="font-size-14 mb-0 reservationAccordion-dropOffLocation"> ' + arrayActiveReservation.DROPOFFLOCATION + '</h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Tour Plan</p>\
+                                                <h5 class="font-size-14 mb-0 reservationAccordion-tourPlan"> ' + arrayActiveReservation.TOURPLAN + ' </h5>\
+                                            </div>\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Remark</p>\
+                                                <h5 class="font-size-14 mb-0 reservationAccordion-remark"> ' + arrayActiveReservation.REMARK + '</h5>\
+                                            </div >\
+                                            <div class="mt-4">\
+                                                <p class="text-muted mb-1" > Special Request</p>\
+                                                <h5 class="font-size-14 mb-0 reservationAccordion-specialRequest" > ' + arrayActiveReservation.SPECIALREQUEST + '</h5>\
+                                            </div>\
+                                            <div class="d-grid mt-4">\
+                                                <button type="button" class="btn btn-primary btn-sm btnShowDetailReservation" data-idReservation="'+ arrayActiveReservation.IDRESERVATION + '" data-bookingCode="' + bookingCode + '">\
+                                                    <i class="ri-edit-line me-1"></i> Edit Reservation\
+                                                </button>\
+                                            </div>\
+                                        </div>\
+                                    </div>\
+                                </div> ';
                         });
                         $("#profile-sidebar-reservationList").html(reservationListElem);
+                        activateBtnShowDetailReservation();
                     }
                     break;
                 default:
@@ -315,16 +328,14 @@ function generateChatThread(idChatList) {
 }
 
 function generateRowChatThread(classRight, initialName, chatContentWrap, userNameChat) {
-    return '<li class="chatThread ' + classRight + '">' +
-        '<div class="conversation-list pb-3">' +
-        '<div class="chat-avatar">' +
-        '<span class="rounded-circle avatar-xs bg-primary-subtle text-primary mx-auto font-size-19 px-2 py-1">' + initialName + '</span>' +
-        '</div>' +
-        '<div class="user-chat-content">' + chatContentWrap +
-        '<div class="conversation-name">' + userNameChat + '</div>' +
-        '</div>' +
-        '</div>' +
-        '</li> ';
+    return '<li class="chatThread ' + classRight + '">\
+                <div class="conversation-list pb-3">\
+                    <div class="chat-avatar">\
+                        <span class="rounded-circle avatar-xs bg-primary-subtle text-primary mx-auto font-size-19 px-2 py-1">' + initialName + '</span>\
+                    </div>\
+                    <div class="user-chat-content">' + chatContentWrap + '<div class="conversation-name">' + userNameChat + '</div></div>\
+                </div>\
+            </li>';
 }
 
 function openChatContact(parameters) {
@@ -469,6 +480,177 @@ $('#modal-messageACKDetails').on('show.bs.modal', function (e) {
             setUserToken(jqXHR);
         });
     }
+});
+
+function activateBtnShowDetailReservation() {
+    $('.btnShowDetailReservation').off('click');
+    $('.btnShowDetailReservation').on('click', function (e) {
+        let idReservation = $(this).attr('data-idReservation'),
+            bookingCode = $(this).attr('data-bookingCode'),
+            dataSend = { idReservation: idReservation };
+        $.ajax({
+            type: 'POST',
+            url: baseURL + "chat/getDetailReservation",
+            contentType: 'application/json',
+            dataType: 'json',
+            cache: false,
+            data: mergeDataSend(dataSend),
+            xhrFields: { withCredentials: true },
+            headers: { Authorization: "Bearer " + getUserToken() },
+            beforeSend: function () {
+                NProgress.set(0.4);
+                resetFormReservation();
+                $("#window-loader").modal("show");
+            },
+            complete: function (jqXHR, textStatus) {
+                var responseJSON = jqXHR.responseJSON;
+                switch (jqXHR.status) {
+                    case 200:
+                        let detailReservation = responseJSON.detailReservation,
+                            dataCurrencyExchange = responseJSON.dataCurrencyExchange;
+                        $("#modalEditReservation-title").val(detailReservation.RESERVATIONTITLE);
+                        $("#modalEditReservation-durationDay").val(detailReservation.DURATIONOFDAY);
+                        $("#modalEditReservation-date").val(detailReservation.RESERVATIONDATESTART);
+                        $("#modalEditReservation-timeHour").val(detailReservation.RESERVATIONHOUR);
+                        $("#modalEditReservation-timeMinute").val(detailReservation.RESERVATIONMINUTE);
+                        if (detailReservation.IDAREA !== '') $("#modalEditReservation-pickUpArea").val(detailReservation.IDAREA);
+                        $("#modalEditReservation-hotelName").val(detailReservation.HOTELNAME);
+                        $("#modalEditReservation-pickupLocation").val(detailReservation.PICKUPLOCATION);
+                        $("#modalEditReservation-pickupLocationLinkUrl").val(detailReservation.URLPICKUPLOCATION);
+                        $("#modalEditReservation-dropOffLocation").val(detailReservation.DROPOFFLOCATION);
+                        $("#modalEditReservation-paxAdult").val(detailReservation.NUMBEROFADULT);
+                        $("#modalEditReservation-paxChild").val(detailReservation.NUMBEROFCHILD);
+                        $("#modalEditReservation-paxInfant").val(detailReservation.NUMBEROFINFANT);
+                        $("#modalEditReservation-incomeCurrency").val(detailReservation.INCOMEAMOUNTCURRENCY);
+                        $("#modalEditReservation-incomeInteger").val(numberFormat(detailReservation.INCOMEAMOUNTINTEGER));
+                        $("#modalEditReservation-incomeComma").val(detailReservation.INCOMEAMOUNTDECIMAL);
+                        $("#modalEditReservation-incomeCurrencyExchange").val(numberFormat(detailReservation.INCOMEEXCHANGECURRENCY));
+                        $("#modalEditReservation-incomeTotalIDR").val(numberFormat(detailReservation.INCOMEAMOUNTIDR));
+                        $("#modalEditReservation-tourPlan").val(detailReservation.TOURPLAN);
+                        $("#modalEditReservation-remark").val(detailReservation.REMARK);
+                        $("#modalEditReservation-specialRequest").val(detailReservation.SPECIALREQUEST);
+                        $('#modalEditReservation-idReservation').val(idReservation);
+                        $('#modalEditReservation-bookingCode').val(bookingCode);
+                        $('#modal-editReservation').modal('show');
+                        activateIncomeCurrencyChange(dataCurrencyExchange);
+                        break;
+                    default:
+                        e.preventDefault();
+                        generateWarningMessageResponse(jqXHR);
+                        break;
+                }
+            }
+        }).always(function (jqXHR, textStatus) {
+            NProgress.done();
+            setUserToken(jqXHR);
+            $("#window-loader").modal("hide");
+        });
+    });
+}
+
+function resetFormReservation() {
+    $("#modalEditReservation-title, #modalEditReservation-hotelName, #modalEditReservation-pickupLocation, #modalEditReservation-pickupLocationLinkUrl, #modalEditReservation-dropOffLocation").val('');
+    $("#modalEditReservation-durationDay, #modalEditReservation-paxAdult, #modalEditReservation-incomeInteger, #modalEditReservation-incomeCurrencyExchange").val(1);
+    $("#modalEditReservation-paxChild, #modalEditReservation-paxInfant, #modalEditReservation-incomeComma, #modalEditReservation-incomeTotalIDR").val(0);
+    resetSelectedOptionFirstValue(['modalEditReservation-timeHour', 'modalEditReservation-timeMinute', 'modalEditReservation-pickUpArea', 'modalEditReservation-incomeCurrency']);
+    $("#modalEditReservation-tourPlan, #modalEditReservation-remark, #modalEditReservation-specialRequest").val('-');
+    $("#modalEditReservation-date").val(moment().format("DD-MM-YYYY"));
+    $("#modalEditReservation-idReservation").val('');
+    calculateReservationIncomeIDR();
+}
+
+function activateIncomeCurrencyChange(dataCurrencyExchange) {
+    $('#modalEditReservation-incomeCurrency').off('change');
+    $('#modalEditReservation-incomeCurrency').on('change', function (e) {
+        var currencyType = $(this).val();
+
+        if (currencyType != 'IDR') {
+            $.each(dataCurrencyExchange, function (index, array) {
+                if (array.CURRENCY == currencyType) {
+                    $("#modalEditReservation-incomeCurrencyExchange").val(numberFormat(array.EXCHANGETOIDR));
+                }
+            });
+            $("#modalEditReservation-incomeComma").prop('readonly', false);
+            $("#modalEditReservation-incomeCurrencyExchange").prop('readonly', false);
+        } else {
+            $("#modalEditReservation-incomeComma").val(0).prop('readonly', true);
+            $("#modalEditReservation-incomeCurrencyExchange").val(1).prop('readonly', true);
+        }
+
+        calculateReservationIncomeIDR();
+    });
+}
+
+$('#modalEditReservation-incomeInteger, #modalEditReservation-incomeComma').off('change');
+$('#modalEditReservation-incomeInteger, #modalEditReservation-incomeComma').on('change', function (e) {
+    calculateReservationIncomeIDR();
+});
+
+function calculateReservationIncomeIDR() {
+    var reservationIncomeInteger = $('#modalEditReservation-incomeInteger').val().replace(/[^0-9\.]+/g, '');
+    reservationIncomeDecimal = $('#modalEditReservation-incomeComma').val().replace(/[^0-9\.]+/g, '');
+    reservationIncome = (reservationIncomeInteger + "." + reservationIncomeDecimal) * 1,
+        currencyExchange = $("#modalEditReservation-incomeCurrencyExchange").val().replace(/[^0-9\.]+/g, '') * 1,
+        reservationIncomeIDR = reservationIncome * currencyExchange;
+
+    $("#modalEditReservation-incomeTotalIDR").val(numberFormat(reservationIncomeIDR));
+}
+
+$('#modalEditReservation-form').off('submit');
+$('#modalEditReservation-form').on('submit', function (e) {
+    e.preventDefault();
+    let dataForm = $("#modalEditReservation-form :input").serializeArray(),
+        dataSend = {};
+
+    $.each(dataForm, function () {
+        dataSend[this.name] = this.value;
+    });
+
+    $.ajax({
+        type: 'POST',
+        url: baseURL + "chat/saveReservation",
+        contentType: 'application/json',
+        dataType: 'json',
+        cache: false,
+        data: mergeDataSend(dataSend),
+        xhrFields: { withCredentials: true },
+        headers: { Authorization: "Bearer " + getUserToken() },
+        beforeSend: function () {
+            $("#modalEditReservation-form :input").attr("disabled", true);
+            NProgress.set(0.4);
+            $('#window-loader').modal('show');
+        },
+        complete: function (jqXHR, textStatus) {
+            var responseJSON = jqXHR.responseJSON;
+            generateWarningMessageResponse(jqXHR);
+            switch (jqXHR.status) {
+                case 200:
+                    let throwableData = responseJSON.throwableData,
+                        bookingCode = $('#modalEditReservation-bookingCode').val(),
+                        elemAccordionReservation = $('#reservation-' + bookingCode);
+                    elemAccordionReservation.find('.reservationAccordion-title').html(throwableData.reservationTitle);
+                    elemAccordionReservation.find('.reservationAccordion-reservationDateTime').html(throwableData.reservationDateStr + " " + throwableData.reservationTimeStr);
+                    elemAccordionReservation.find('.reservationAccordion-paxDetails').html(throwableData.paxDetailStr);
+                    elemAccordionReservation.find('.reservationAccordion-areaName').html($("#modalEditReservation-pickUpArea option:selected").text());
+                    elemAccordionReservation.find('.reservationAccordion-hotelName').html(throwableData.hotelName);
+                    elemAccordionReservation.find('.reservationAccordion-pickUpLocation').html(throwableData.pickUpLocation);
+                    elemAccordionReservation.find('.reservationAccordion-dropOffLocation').html(throwableData.dropOffLocation);
+                    elemAccordionReservation.find('.reservationAccordion-tourPlan').html(throwableData.tourPlan);
+                    elemAccordionReservation.find('.reservationAccordion-remark').html(throwableData.remark);
+                    elemAccordionReservation.find('.reservationAccordion-specialRequest').html(throwableData.specialRequest);
+
+                    $('#modal-editReservation').modal('hide');
+                    break;
+                default:
+                    break;
+            }
+        }
+    }).always(function (jqXHR, textStatus) {
+        setUserToken(jqXHR);
+        $('#window-loader').modal('hide');
+        NProgress.done();
+        $("#modalEditReservation-form :input").attr("disabled", false);
+    });
 });
 
 chatFunc();
