@@ -334,8 +334,7 @@ $('#editorUserAdmin-form').on('submit', function (e) {
                 var responseJSON = jqXHR.responseJSON;
                 switch (jqXHR.status) {
                     case 200:
-                        let dataResponse = responseJSON.throwableData,
-                            idUserAdmin = dataResponse.idUserAdmin;
+                        let idUserAdmin = responseJSON.idUserAdmin;
                         getDataUserAdmin(idUserAdmin);
                         showToast('success', jqXHR)
                         break;

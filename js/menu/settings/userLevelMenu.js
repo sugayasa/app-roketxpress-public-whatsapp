@@ -220,8 +220,7 @@ $('#modalAddNewUserLevel-form').on('submit', function (e) {
                 var responseJSON = jqXHR.responseJSON;
                 switch (jqXHR.status) {
                     case 200:
-                        let dataResponse = responseJSON.throwableData,
-                            idUserLevel = dataResponse.idUserLevel;
+                        let idUserLevel = responseJSON.idUserLevel;
                         getDataUserLevel(idUserLevel);
                         $('#modal-addNewUserLevel').modal('hide');
                         $("#modalAddNewUserLevel-userLevelName, #modalAddNewUserLevel-description").val('');
@@ -300,8 +299,7 @@ $('#userlevelDetails-btnSaveMenuLevelAdmin').on('click', function (e) {
                 var responseJSON = jqXHR.responseJSON;
                 switch (jqXHR.status) {
                     case 200:
-                        let dataResponse = responseJSON.throwableData,
-                            idUserLevel = dataResponse.idUserLevel;
+                        let idUserLevel = responseJSON.idUserLevel;
                         getDataUserLevel(idUserLevel);
                         showToast('success', jqXHR)
                         break;

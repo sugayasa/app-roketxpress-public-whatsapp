@@ -625,19 +625,19 @@ $('#modalEditReservation-form').on('submit', function (e) {
             generateWarningMessageResponse(jqXHR);
             switch (jqXHR.status) {
                 case 200:
-                    let throwableData = responseJSON.throwableData,
+                    let dataUpdate = responseJSON.dataUpdate,
                         bookingCode = $('#modalEditReservation-bookingCode').val(),
                         elemAccordionReservation = $('#reservation-' + bookingCode);
-                    elemAccordionReservation.find('.reservationAccordion-title').html(throwableData.reservationTitle);
-                    elemAccordionReservation.find('.reservationAccordion-reservationDateTime').html(throwableData.reservationDateStr + " " + throwableData.reservationTimeStr);
-                    elemAccordionReservation.find('.reservationAccordion-paxDetails').html(throwableData.paxDetailStr);
+                    elemAccordionReservation.find('.reservationAccordion-title').html(dataUpdate.reservationTitle);
+                    elemAccordionReservation.find('.reservationAccordion-reservationDateTime').html(dataUpdate.reservationDateStr + " " + dataUpdate.reservationTimeStr);
+                    elemAccordionReservation.find('.reservationAccordion-paxDetails').html(dataUpdate.paxDetailStr);
                     elemAccordionReservation.find('.reservationAccordion-areaName').html($("#modalEditReservation-pickUpArea option:selected").text());
-                    elemAccordionReservation.find('.reservationAccordion-hotelName').html(throwableData.hotelName);
-                    elemAccordionReservation.find('.reservationAccordion-pickUpLocation').html(throwableData.pickUpLocation);
-                    elemAccordionReservation.find('.reservationAccordion-dropOffLocation').html(throwableData.dropOffLocation);
-                    elemAccordionReservation.find('.reservationAccordion-tourPlan').html(throwableData.tourPlan);
-                    elemAccordionReservation.find('.reservationAccordion-remark').html(throwableData.remark);
-                    elemAccordionReservation.find('.reservationAccordion-specialRequest').html(throwableData.specialRequest);
+                    elemAccordionReservation.find('.reservationAccordion-hotelName').html(dataUpdate.hotelName);
+                    elemAccordionReservation.find('.reservationAccordion-pickUpLocation').html(dataUpdate.pickUpLocation);
+                    elemAccordionReservation.find('.reservationAccordion-dropOffLocation').html(dataUpdate.dropOffLocation);
+                    elemAccordionReservation.find('.reservationAccordion-tourPlan').html(dataUpdate.tourPlan);
+                    elemAccordionReservation.find('.reservationAccordion-remark').html(dataUpdate.remark);
+                    elemAccordionReservation.find('.reservationAccordion-specialRequest').html(dataUpdate.specialRequest);
 
                     $('#modal-editReservation').modal('hide');
                     break;
