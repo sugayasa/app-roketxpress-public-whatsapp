@@ -145,7 +145,7 @@ function getDataChatList(page = 1) {
     }).always(function (jqXHR, textStatus) {
         NProgress.done();
         setUserToken(jqXHR);
-        $('#chatStatusNav li button').prop('disabled', false);
+        $('#chatStatusNav li button, #filter-searchKeyword').prop('disabled', false);
         $('#filter-searchKeyword, #filter-idContact').val('');
     });
 }
