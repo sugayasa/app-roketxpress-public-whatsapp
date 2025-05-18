@@ -198,6 +198,9 @@ function generateChatThread(idChatList) {
             $("#profile-sidebar-initial, #profile-sidebar-fullName").html("-");
             $("#profile-sidebar-phoneNumber, #profile-sidebar-countryContinent, #profile-sidebar-email").html("-");
             $(".chatThread, .chat-day-title, .reservationListElem").remove();
+            $("#chat-threadPage").val(1);
+            $("#chat-isMaximumChatThreadContent").val(false);
+            $('.simplebar-content-wrapper').has('#chat-conversation-ul').off('scroll');
         },
         complete: function (jqXHR, textStatus) {
             var responseJSON = jqXHR.responseJSON;
@@ -206,8 +209,7 @@ function generateChatThread(idChatList) {
                 case 200:
                     var detailContact = responseJSON.detailContact,
                         listChatThread = responseJSON.listChatThread,
-                        listActiveReservation = responseJSON.listActiveReservation,
-                        rowChatThread = chatContentWrap = '';
+                        listActiveReservation = responseJSON.listActiveReservation;
 
                     $("#chat-topbar-initial, #profile-sidebar-initial").html(detailContact.NAMEALPHASEPARATOR);
                     $("#chat-topbar-fullName, #profile-sidebar-fullName").html(detailContact.NAMEFULL);
@@ -217,34 +219,8 @@ function generateChatThread(idChatList) {
                     $("#chat-idChatList").val(idChatList);
                     $("#chat-timeStampLastReply").val(detailContact.DATETIMELASTREPLY);
                     $("#chat-idContact").val(detailContact.IDCONTACT);
+                    generateChatThreadBody(listChatThread);
                     counterTimeChatList();
-
-                    $.each(listChatThread, function (index, arrayChatThread) {
-                        var chatThreadPosition = arrayChatThread.CHATTHREADPOSITION,
-                            userNameChat = arrayChatThread.USERNAMECHAT,
-                            dayTitle = arrayChatThread.DAYTITLE,
-                            chatContent = generateChatContent(arrayChatThread),
-                            classRight = chatThreadPosition == 'L' ? '' : 'right';
-                        var arrayChatThreadNext = (index + 1 < listChatThread.length) ? listChatThread[index + 1] : false,
-                            chatThreadPositionNext = arrayChatThreadNext.CHATTHREADPOSITION,
-                            userNameChatNext = arrayChatThreadNext.USERNAMECHAT,
-                            dayTitleNext = arrayChatThreadNext.DAYTITLE,
-                            textStartClass = arrayChatThread.ISTEMPLATE ? 'text-start' : '';
-
-                        chatContentWrap += generateChatContentWrap(chatThreadPosition, arrayChatThread, chatContent, arrayChatThread.CHATTIME, textStartClass);
-
-                        var $elemRowChatThread = $(rowChatThread),
-                            isDayTitleElemExist = $elemRowChatThread.find('.chat-day-title[data-dayTitle="' + dayTitle + '"]').length > 0;
-
-                        if (chatThreadPosition != chatThreadPositionNext || userNameChat != userNameChatNext || (dayTitle != dayTitleNext && !isDayTitleElemExist)) {
-                            if (!isDayTitleElemExist) rowChatThread += '<li><div class="chat-day-title" data-dayTitle="' + dayTitle + '"><span class="title">' + dayTitle + '</span></div></li>';
-                            rowChatThread += generateRowChatThread(classRight, arrayChatThread.INITIALNAME, chatContentWrap, userNameChat);
-                            chatContentWrap = '';
-                        }
-                    });
-                    $("#chat-conversation-ul").html(rowChatThread);
-                    activateChatContentOptionButton();
-                    recalculateSimpleBar('chat-conversation', true);
 
                     if (listActiveReservation) {
                         var reservationListElem = '';
@@ -324,6 +300,95 @@ function generateChatThread(idChatList) {
     }).always(function (jqXHR, textStatus) {
         NProgress.done();
         setUserToken(jqXHR);
+    });
+}
+
+function generateChatThreadBody(listChatThread, prepend = false, callback = false) {
+    let rowChatThread = chatContentWrap = '';
+    $.each(listChatThread, function (index, arrayChatThread) {
+        var chatThreadPosition = arrayChatThread.CHATTHREADPOSITION,
+            userNameChat = arrayChatThread.USERNAMECHAT,
+            dayTitle = arrayChatThread.DAYTITLE,
+            chatContent = generateChatContent(arrayChatThread),
+            classRight = chatThreadPosition == 'L' ? '' : 'right';
+        var arrayChatThreadNext = (index + 1 < listChatThread.length) ? listChatThread[index + 1] : false,
+            chatThreadPositionNext = arrayChatThreadNext.CHATTHREADPOSITION,
+            userNameChatNext = arrayChatThreadNext.USERNAMECHAT,
+            dayTitleNext = arrayChatThreadNext.DAYTITLE,
+            textStartClass = arrayChatThread.ISTEMPLATE ? 'text-start' : '';
+
+        chatContentWrap += generateChatContentWrap(chatThreadPosition, arrayChatThread, chatContent, arrayChatThread.CHATTIME, textStartClass);
+
+        var $elemRowChatThread = $(rowChatThread),
+            isDayTitleElemExist = $elemRowChatThread.find('.chat-day-title[data-dayTitle="' + dayTitle + '"]').length > 0;
+
+        if (chatThreadPosition != chatThreadPositionNext || userNameChat != userNameChatNext || (dayTitle != dayTitleNext && !isDayTitleElemExist)) {
+            if (!isDayTitleElemExist) rowChatThread += '<li><div class="chat-day-title" data-dayTitle="' + dayTitle + '"><span class="title">' + dayTitle + '</span></div></li>';
+            rowChatThread += generateRowChatThread(classRight, arrayChatThread.INITIALNAME, chatContentWrap, userNameChat);
+            chatContentWrap = '';
+        }
+    });
+
+    if (!prepend) $("#chat-conversation-ul").html(rowChatThread);
+    if (prepend) $("#chat-conversation-ul").prepend(rowChatThread);
+    activateChatContentOptionButton();
+    activateScrollToTopChatThread();
+    recalculateSimpleBar('chat-conversation', prepend ? false : true);
+
+    if (typeof callback === 'function') callback();
+}
+
+function activateScrollToTopChatThread() {
+    let simpleBarContentWrapper = $('.simplebar-content-wrapper').has('#chat-conversation-ul'),
+        oldScrollHeight = simpleBarContentWrapper.prop('scrollHeight');
+
+    simpleBarContentWrapper.off('scroll');
+    simpleBarContentWrapper.on('scroll', function () {
+        if ($(this).scrollTop() === 0) {
+            if ($("#chat-isMaximumChatThreadContent").val() == 'false') {
+                var idChatList = $("#chat-idChatList").val(),
+                    page = parseInt($("#chat-threadPage").val()) + 1,
+                    dataSend = { idChatList: idChatList, page: page };
+                $.ajax({
+                    type: 'POST',
+                    url: baseURL + "chat/getMoreChatThread",
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    cache: false,
+                    data: mergeDataSend(dataSend),
+                    xhrFields: { withCredentials: true },
+                    headers: { Authorization: 'Bearer ' + getUserToken() },
+                    beforeSend: function () {
+                        $("#chat-conversation-ul").prepend('<li id="chat-conversation-ul-loader"><div class="chat-day-title no-before" data-daytitle="Loading previous conversation.."><span class="title">Loading previous conversation..</span></div></li>');
+                        simpleBarContentWrapper.off('scroll');
+                        NProgress.set(0.4);
+                    },
+                    complete: function (jqXHR, textStatus) {
+                        var responseJSON = jqXHR.responseJSON;
+
+                        switch (jqXHR.status) {
+                            case 200:
+                                var listChatThread = responseJSON.listChatThread;
+                                generateChatThreadBody(listChatThread, true, function () {
+                                    let newScrollHeight = simpleBarContentWrapper.prop('scrollHeight');
+                                    simpleBarContentWrapper.scrollTop(newScrollHeight - oldScrollHeight);
+                                });
+                                $("#chat-threadPage").val(page);
+                                break;
+                            case 404:
+                                $("#chat-isMaximumChatThreadContent").val(true);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }).always(function (jqXHR, textStatus) {
+                    $("#chat-conversation-ul-loader").remove();
+                    NProgress.done();
+                    setUserToken(jqXHR);
+                });
+            }
+        }
     });
 }
 

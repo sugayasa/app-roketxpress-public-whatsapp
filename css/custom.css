@@ -271,3 +271,8 @@ table td, table th {
         z-index: -1;
     }
 }
+
+.no-before::before {
+  content: none !important;
+  all: unset !important;
+}
