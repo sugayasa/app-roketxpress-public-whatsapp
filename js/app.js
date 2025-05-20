@@ -632,7 +632,7 @@ function generateClassContentLongText(arrayChatThread) {
             classReturn = isContainsLongText ? 'w-75 mw-100' : '';
             break;
         case 2:
-            classReturn = 'mw-50';
+            classReturn = 'mw-75';
     }
 
     return classReturn;
