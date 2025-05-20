@@ -276,3 +276,7 @@ table td, table th {
   content: none !important;
   all: unset !important;
 }
+
+.mw-50 {
+  max-width: 50%;
+}

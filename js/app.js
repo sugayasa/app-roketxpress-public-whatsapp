@@ -19,14 +19,7 @@ $(document).ready(function () {
     const liveToast = document.getElementById('liveToast');
     elemToast = new bootstrap.Toast(liveToast);
 
-    $(".popup-img").magnificPopup({
-        type: "image",
-        closeOnContentClick: !0,
-        mainClass: "mfp-img-mobile",
-        image: {
-            verticalFit: !0
-        }
-    }),
+    activateMagnificPopup(),
         $("#user-status-carousel").owlCarousel({
             items: 4,
             loop: !1,
@@ -230,6 +223,17 @@ $(document).ready(function () {
         $('.menu-item').first().click();
     }
 });
+
+function activateMagnificPopup() {
+    $(".popup-img").magnificPopup({
+        type: "image",
+        closeOnContentClick: !0,
+        mainClass: "mfp-img-mobile",
+        image: {
+            verticalFit: !0
+        }
+    })
+}
 
 function downloadAndStoreMedia(url, key) {
     fetch(url)
@@ -524,14 +528,34 @@ function setVerticalCenterContentContainer(elemId, contentHeight) {
 }
 
 function generateChatContent(arrayChatThread) {
-    var contentHeader = arrayChatThread.CHATCONTENTHEADER,
-        contentBody = arrayChatThread.CHATCONTENTBODY,
-        contentFooter = arrayChatThread.CHATCONTENTFOOTER,
+    let idChatThreadType = arrayChatThread.IDCHATTHREADTYPE,
         elemContentReturn = '';
 
-    if (contentHeader != '') elemContentReturn += '<p class="mb-0 fw-bold border-bottom border-primary pb-2 mb-2">' + contentHeader + '</p>';
-    if (contentBody != '') elemContentReturn += '<p class="mb-0">' + generateChatContentBody(contentBody) + '</p>';
-    if (contentFooter != '') elemContentReturn += '<p class="mb-0 small text-muted border-top border-primary pt-2 mt-3">' + contentFooter + '</p>';
+    switch (parseInt(idChatThreadType)) {
+        case 1:
+            let contentHeader = arrayChatThread.CHATCONTENTHEADER,
+                contentBody = arrayChatThread.CHATCONTENTBODY,
+                contentFooter = arrayChatThread.CHATCONTENTFOOTER;
+
+            if (contentHeader != '') elemContentReturn += '<p class="mb-0 fw-bold border-bottom border-primary pb-2 mb-2">' + contentHeader + '</p>';
+            if (contentBody != '') elemContentReturn += '<p class="mb-0">' + generateChatContentBody(contentBody) + '</p>';
+            if (contentFooter != '') elemContentReturn += '<p class="mb-0 small text-muted border-top border-primary pt-2 mt-3">' + contentFooter + '</p>';
+            break;
+        case 2:
+            let chatCaption = arrayChatThread.CHATCAPTION,
+                elemCaption = chatCaption != '' && chatCaption != null ? '<div class="ps-1"><p>' + chatCaption + '</p></div>' : '';
+            elemContentReturn = '<ul class="list-inline message-img mb-0">\
+                                    <li class="list-inline-item message-img-list mt-1 ms-0">\
+                                        <div>\
+                                            <a class="popup-img d-inline-block m-1" href="'+ arrayChatThread.CHATCONTENTBODY + '">\
+                                                <img src="'+ arrayChatThread.CHATCONTENTBODY + '" alt="" class="rounded border">\
+                                            </a>\
+                                            '+ elemCaption + '\
+                                        </div>\
+                                    </li>\
+                                </ul >';
+            break;
+    }
 
     return elemContentReturn;
 }
@@ -559,15 +583,14 @@ function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatConten
         dateTimeReadStr = dateTimeRead !== null ? formatDateTimeZoneString(dateTimeRead) : '-',
         dataIdChatThreadAttr = chatThreadPosition == 'L' ? 'data-idchatthread="' + idChatThread + '"' : '',
         dropdownOptionElem = chatThreadPosition == 'L' ?
-            '<div class="dropdown align-self-start">' +
-            '<a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' +
-            '<i class="ri-more-2-fill"></i>' +
-            '</a>' +
-            '<div class="dropdown-menu">' +
-            '<a class="dropdown-item chatContentWrap-optionButtonCopy" href="#" data-idMessage="' + idMessage + '">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>' +
-            // '<a class="dropdown-item" href="#">Forward <i class="ri-chat-forward-line float-end text-muted"></i></a>' +
-            '</div>' +
-            '</div>' : '',
+            '<div class="dropdown align-self-start">\
+                <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">\
+                    <i class="ri-more-2-fill"></i>\
+                </a>\
+                <div class="dropdown-menu">\
+                    <a class="dropdown-item chatContentWrap-optionButtonCopy" href="#" data-idMessage="' + idMessage + '">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>\
+                </div>\
+            </div>' : '',
         classIconACK = '';
 
     switch (true) {
@@ -578,32 +601,41 @@ function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatConten
         default: classIconACK = 'ri-hourglass-2-fill text-muted'; break;
     }
 
-    return '<div class="ctext-wrap" data-idMessage="' + idMessage + '">' +
-        '<div class="ctext-wrap-content ' + textStartClass + ' ' + classContentLongText + '">' +
-        chatContent +
-        '<p class="chat-time mb-0 d-flex justify-content-between font-size-13">' +
-        '<span class="me-2"><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>' +
-        '<span class="ms-2" data-bs-toggle="modal" data-bs-target="#modal-messageACKDetails" ' + dataIdChatThreadAttr + ' data-ack-sent="' + dateTimeSentStr + '" data-ack-delivered="' + dateTimeDeliveredStr + '" data-ack-read="' + dateTimeReadStr + '">' +
-        '<i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data-idMessage="' + idMessage + '"></i>' +
-        '</span>' +
-        '</p>' +
-        '</div>' +
-        dropdownOptionElem +
-        '</div>';
+    return '<div class="ctext-wrap" data-idMessage="' + idMessage + '">\
+                <div class="ctext-wrap-content ' + textStartClass + ' ' + classContentLongText + '">\
+                    '+ chatContent + '\
+                    <p class="chat-time mb-0 d-flex justify-content-between font-size-13">\
+                        <span class="me-2" ><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>\
+                        <span class="ms-2" data-bs-toggle="modal" data-bs-target="#modal-messageACKDetails" ' + dataIdChatThreadAttr + ' data-ack-sent="' + dateTimeSentStr + '" data-ack-delivered="' + dateTimeDeliveredStr + '" data-ack-read="' + dateTimeReadStr + '">\
+                            <i class="fw-bold chatContentWrap-iconACK ' + classIconACK + '" data - idMessage="' + idMessage + '" ></i>\
+                        </span>\
+                    </p>\
+                </div>\
+                '+ dropdownOptionElem + '\
+            </div>';
 }
 
 function generateClassContentLongText(arrayChatThread) {
-    let contentBody = arrayChatThread.CHATCONTENTBODY,
-        contentBodyHtml = generateChatContentBody(contentBody),
-        isContainsLongText = false,
-        arrContentBodyHtml = contentBodyHtml.split('<br>');
-    $.each(arrContentBodyHtml, function (index, value) {
-        if (value.length > 100) {
-            isContainsLongText = true;
-        }
-    });
+    let classReturn = '';
 
-    return isContainsLongText ? 'w-75 mw-100' : '';
+    switch (parseInt(arrayChatThread.IDCHATTHREADTYPE)) {
+        case 1:
+            let contentBody = arrayChatThread.CHATCONTENTBODY,
+                contentBodyHtml = generateChatContentBody(contentBody),
+                isContainsLongText = false,
+                arrContentBodyHtml = contentBodyHtml.split('<br>');
+            $.each(arrContentBodyHtml, function (index, value) {
+                if (value.length > 100) {
+                    isContainsLongText = true;
+                }
+            });
+            classReturn = isContainsLongText ? 'w-75 mw-100' : '';
+            break;
+        case 2:
+            classReturn = 'mw-50';
+    }
+
+    return classReturn;
 }
 
 function activateChatContentOptionButton() {

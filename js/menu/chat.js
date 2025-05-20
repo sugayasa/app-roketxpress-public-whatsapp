@@ -334,6 +334,7 @@ function generateChatThreadBody(listChatThread, prepend = false, callback = fals
     activateChatContentOptionButton();
     activateScrollToTopChatThread();
     recalculateSimpleBar('chat-conversation', prepend ? false : true);
+    activateMagnificPopup();
 
     if (typeof callback === 'function') callback();
 }
