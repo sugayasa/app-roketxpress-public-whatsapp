@@ -46,6 +46,8 @@ $(document).ready(function () {
                 var responseJSON = jqXHR.responseJSON;
                 switch (jqXHR.status) {
                     case 200:
+                        let optionHelper = responseJSON.optionHelper;
+                        localStorage.setItem("optionHelper", JSON.stringify(optionHelper));
                         callMainPage();
                         break;
                     default:
