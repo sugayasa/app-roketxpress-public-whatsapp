@@ -280,3 +280,11 @@ table td, table th {
 .mw-50 {
   max-width: 50%;
 }
+
+.w-40 {
+  width: 40% !important;
+}
+
+.w-60 {
+  width: 60% !important;
+}

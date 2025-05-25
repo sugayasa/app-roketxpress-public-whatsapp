@@ -23,8 +23,7 @@ $(document).ready(function () {
             var responseJSON = jqXHR.responseJSON;
             switch (jqXHR.status) {
                 case 200:
-                    let responseJSON = jqXHR.responseJSON,
-                        optionHelper = responseJSON.optionHelper;
+                    let optionHelper = responseJSON.optionHelper;
                     localStorage.setItem("optionHelper", JSON.stringify(optionHelper));
                     $("#loadtext").html("Redirecting to main page...");
                     setTimeout(callMainPage, 500);

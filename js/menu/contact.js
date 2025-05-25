@@ -9,10 +9,35 @@ if (contactFunc == null) {
     var contactFunc = function () {
         $(document).ready(function () {
             let askQuestionTemplateData, listDetailReservation, reservationProperty;
+            setOptionHelper('editorContact-nameTitle', 'dataNameTitle');
+            setOptionHelper('editorContact-country', 'dataCountryPhoneCode', defaultCountryCode, function () {
+                $("#editorContact-country").select2({
+                    dropdownParent: $("#modal-editorContact"),
+                    theme: 'bootstrap-5'
+                });
+            });
             getDataContact();
         });
     }
 }
+
+$("#modal-editorContact").off('show.bs.modal');
+$("#modal-editorContact").on('show.bs.modal', function (e) {
+    let elemTrigger = e.relatedTarget,
+        idContact = elemTrigger.getAttribute('data-idContact');
+
+    if (typeof idContact !== 'undefined' && idContact != '' && idContact != null) {
+        $('#editorContact-nameTitle').val(elemTrigger.getAttribute('data-idNameTitle'));
+        $('#editorContact-name').val($("#detailContact-fullname").html());
+        $('#editorContact-country').val(elemTrigger.getAttribute('data-idCountry')).trigger('change');
+        $('#editorContact-phoneNumber').val(elemTrigger.getAttribute('data-phoneNumberBase'));
+        $('#editorContact-email').val($("#detailContact-email").html().replace('| ', ''));
+        $('#editorContact-idContact').val(idContact);
+    } else {
+        $('#editorContact-name, #editorContact-phoneNumber, #editorContact-email, #editorContact-idContact').val("");
+        $("#editorContact-country").val(defaultCountryCode).trigger('change');
+    }
+});
 
 $('#filter-optionContactType').off('change');
 $('#filter-optionContactType').on('change', function (e) {
@@ -65,23 +90,7 @@ function getDataContact(page = 1) {
 
                     askQuestionTemplateData = responseJSON.askQuestionTemplate;
                     $.each(dataContact, function (index, arrayContact) {
-                        var emailAddress = arrayContact.EMAILS == '' || arrayContact.EMAILS == '-' ? '' : ' | ' + arrayContact.EMAILS;
-                        rows += '<li class="contact-item" data-idContact="' + arrayContact.IDCONTACT + '" data-idChatList="' + arrayContact.IDCHATLIST + '" data-timeStampLastReply="' + arrayContact.DATETIMELASTREPLY + '">' +
-                            '<a href="#">' +
-                            '<div class="d-flex">' +
-                            '<div class="chat-user-img align-self-center me-3 ms-0">' +
-                            '<div class="avatar-xs">' +
-                            '<span class="avatar-title rounded-circle bg-primary-subtle text-primary">' + arrayContact.NAMEALPHASEPARATOR + '</span >' +
-                            '</div>' +
-                            '<span class="user-status"></span>' +
-                            '</div>' +
-                            '<div class="flex-grow-1 overflow-hidden">' +
-                            '<h5 class="text-truncate font-size-15 mb-1">' + arrayContact.NAMEFULL + '</h5>' +
-                            '<p class="chat-user-message text-truncate mb-0">+' + arrayContact.PHONENUMBER + emailAddress + '</p>' +
-                            '</div>' +
-                            '</div>' +
-                            '</a>' +
-                            '</li>';
+                        rows += generateRowContactList(arrayContact);
                     });
                     break;
                 case 404:
@@ -118,6 +127,26 @@ function getDataContact(page = 1) {
         NProgress.done();
         setUserToken(jqXHR);
     });
+}
+
+function generateRowContactList(dataContact) {
+    var emailAddress = dataContact.EMAILS == '' || dataContact.EMAILS == '-' ? '' : ' | ' + dataContact.EMAILS;
+    return '<li class="contact-item" data-idContact="' + dataContact.IDCONTACT + '" data-idChatList="' + dataContact.IDCHATLIST + '" data-timeStampLastReply="' + dataContact.DATETIMELASTREPLY + '">\
+            <a href="#">\
+                <div class="d-flex">\
+                    <div class="chat-user-img align-self-center me-3 ms-0">\
+                        <div class="avatar-xs">\
+                            <span class="avatar-title rounded-circle bg-primary-subtle text-primary">' + dataContact.NAMEALPHASEPARATOR + '</span >\
+                        </div>\
+                        <span class="user-status"></span>\
+                    </div>\
+                    <div class="flex-grow-1 overflow-hidden">\
+                        <h5 class="text-truncate font-size-15 mb-1">' + dataContact.NAMEFULL + '</h5>\
+                        <p class="chat-user-message text-truncate mb-0">+' + dataContact.PHONENUMBER + emailAddress + '</p>\
+                    </div>\
+                </div>\
+            </a>\
+        </li>';
 }
 
 function activateOnClickContactItem() {
@@ -176,6 +205,7 @@ function getDetailContact(idContact) {
                     $("#detailContact-fullname").html(detailContact.NAMEFULL);
                     $("#detailContact-phoneNumberCountry").html("| +" + detailContact.PHONENUMBER + " (" + detailContact.COUNTRYNAME + ", " + detailContact.CONTINENTNAME + ")");
                     $("#detailContact-email").html("| " + detailContact.EMAILS);
+                    $("#detailContact-btnEditContact").attr("data-idContact", idContact).attr("data-idCountry", detailContact.IDCOUNTRY).attr("data-idNameTitle", detailContact.IDNAMETITLE).attr("data-phoneNumberBase", detailContact.PHONENUMBERBASE);
                     $("#detailContact-iconSession").attr('data-timeStampLastReply', timeStampLastReply);
                     $("#detailContact-totalReservation").html(detailContact.TOTALRESERVATION + " Total reservation(s)");
                     if (isValidWhatsAppAccount == -1) $("#detailContact-invalidWhatsAppAcountAlert").removeClass('d-none');
@@ -758,5 +788,58 @@ function sendMessageTemplateReservation(idContact, phoneNumber, templateData, te
         getDetailContact(idContact);
     });
 }
+
+$('#modalEditorContact-form').off('submit');
+$('#modalEditorContact-form').on('submit', function (e) {
+    e.preventDefault();
+    let dataForm = $("#modalEditorContact-form :input").serializeArray(),
+        dataSend = {};
+
+    $.each(dataForm, function () {
+        dataSend[this.name] = this.value;
+    });
+
+    $.ajax({
+        type: 'POST',
+        url: baseURL + "contact/saveContact",
+        contentType: 'application/json',
+        dataType: 'json',
+        cache: false,
+        data: mergeDataSend(dataSend),
+        xhrFields: { withCredentials: true },
+        headers: { Authorization: "Bearer " + getUserToken() },
+        beforeSend: function () {
+            NProgress.set(0.4);
+            $('#window-loader').modal('show');
+            $("#modalEditorContact-form :input").attr("disabled", true);
+        },
+        complete: function (jqXHR, textStatus) {
+            var responseJSON = jqXHR.responseJSON;
+            switch (jqXHR.status) {
+                case 200:
+                    showToast('success', jqXHR);
+                    let detailContact = responseJSON.detailContact,
+                        idContact = detailContact.IDCONTACT,
+                        rowContact = generateRowContactList(detailContact);
+
+                    if ($(".contact-item[data-idContact=" + idContact + "]").length > 0) $(".contact-item[data-idContact=" + idContact + "]").replaceWith(rowContact);
+                    else $("#list-contactData").prepend(rowContact);
+
+                    activateOnClickContactItem();
+                    $(".contact-item[data-idContact=" + idContact + "]").trigger('click');
+                    $('#modal-editorContact').modal('hide');
+                    break;
+                default:
+                    generateWarningMessageResponse(jqXHR);
+                    break;
+            }
+        }
+    }).always(function (jqXHR, textStatus) {
+        setUserToken(jqXHR);
+        $("#modalEditorContact-form :input").attr("disabled", false);
+        $('#window-loader').modal('hide');
+        NProgress.done();
+    });
+});
 
 contactFunc();
