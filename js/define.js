@@ -33,10 +33,10 @@ function getHardwareID() {
             return hardwareID;
         }
 
-        hardwareID = signatureData.browser.signature.toString() + "";
+        hardwareID = signatureData.canvas.signature.toString() + "";
     });
 
-    return hardwareID;
+    return hardwareID.replaceAll(/[^a-zA-Z0-9]/g, "");
 }
 
 function getUserTimeZoneOffset() {
