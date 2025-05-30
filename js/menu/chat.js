@@ -481,7 +481,7 @@ $('#chat-inputTextMessage').on('input', function () {
         case 2: vhReducer = 182; break;
         case 3: vhReducer = 203; break;
         case 4: vhReducer = 224; break;
-        case 5: vhReducer = 245; break;
+        default: vhReducer = 245; break;
     }
 
     $('.chat-conversation').css('height', 'calc(100vh - ' + vhReducer + 'px)');
