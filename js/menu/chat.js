@@ -1,6 +1,34 @@
+var dataReservationTypeClass = {};
 if (chatFunc == null) {
     var chatFunc = function () {
         $(document).ready(function () {
+            let dataOptionHelper = JSON.parse(localStorage.getItem("optionHelper")),
+                dataReservationType = dataOptionHelper['dataReservationType'];
+
+            if (typeof dataReservationType != 'undefined' && dataReservationType != null && dataReservationType.length > 0) {
+                let checkBoxReservationType = '';
+                $.each(dataReservationType, function (index, arrayReservationType) {
+                    let checked = idReservationType == arrayReservationType.ID ? 'checked' : '';
+                    if (idReservationType == 0) checked = 'checked';
+
+                    checkBoxReservationType += '<div class="form-check form-check-inline">\
+                                                    <input '+ checked + ' class="form-check-input reservationTypeCheckbox" type="checkbox" id="reservationType-' + arrayReservationType.ID + '" value="' + arrayReservationType.ID + '">\
+                                                    <label \
+                                                        for="reservationType-'+ arrayReservationType.ID + '" \
+                                                        class="form-check-label font-size-12 pe-1 border-end border-5 border-' + arrClassColor[index] + '">\
+                                                            ' + arrayReservationType.VALUE + '\
+                                                    </label>\
+                                                </div>';
+                    dataReservationTypeClass[arrayReservationType.ID] = arrClassColor[index];
+                });
+
+                $("#filter-reservationTypeContainer").append(checkBoxReservationType);
+                $('.reservationTypeCheckbox').off('click');
+                $('.reservationTypeCheckbox').on('click', function (e) {
+                    getDataChatList();
+                });
+            }
+
             $("#user-profile-hide").click(function () {
                 $(".user-profile-sidebar").hide()
             }), $(".user-profile-show").click(function () {
@@ -55,10 +83,14 @@ function getDataChatList(page = 1) {
     var $elemList = $('#list-chatListData'),
         idContact = $('#filter-idContact').val(),
         searchKeyword = $('#filter-searchKeyword').val(),
-        chatType = $('#chatStatusNav li button.nav-link.active').attr('data-chatType'),
+        arrReservationType = $('.reservationTypeCheckbox:checked').map(function () {
+            return this.value;
+        }).get();
+    chatType = $('#chatStatusNav li button.nav-link.active').attr('data-chatType'),
         dataSend = {
             page: page,
             searchKeyword: searchKeyword,
+            arrReservationType: arrReservationType,
             chatType: chatType,
             idContact: idContact
         };
@@ -90,13 +122,25 @@ function getDataChatList(page = 1) {
             switch (jqXHR.status) {
                 case 200:
                     var dataChatList = responseJSON.dataChatList,
-                        nextPage = page + 1;
-                    loadMoreData = responseJSON.loadMoreData;
+                        nextPage = page + 1,
+                        loadMoreData = responseJSON.loadMoreData;
                     $.each(dataChatList, function (index, arrayChat) {
-                        var totalUnreadMsg = arrayChat.TOTALUNREADMESSAGE;
-                        totalUnreadMsgElem = totalUnreadMsg > 0 ? '<div class="unread-message"><span class="badge badge-soft-danger rounded-pill">' + totalUnreadMsg + '</span></div>' : '';
+                        var totalUnreadMsg = arrayChat.TOTALUNREADMESSAGE,
+                            arrIdReservationType = arrayChat.ARRIDRESERVATIONTYPE,
+                            elemReservatioTypeTag = '';
+                        totalUnreadMsgElem = totalUnreadMsg > 0 ? '<div class="unread-message"><span class="badge badge-soft-danger rounded-pill py-0">' + totalUnreadMsg + '</span></div>' : '';
+
+                        if (arrIdReservationType.length > 0) {
+                            for (var i = 0; i < arrIdReservationType.length; i++) {
+                                let tagClass = dataReservationTypeClass[arrIdReservationType[i]];
+                                if (typeof tagClass != 'undefined' && tagClass != null) elemReservatioTypeTag += '<div class="bg-' + tagClass + ' width-5px">&nbsp;</div>';
+                            }
+                        } else {
+                            elemReservatioTypeTag += '<div class="width-5px">&nbsp;</div>';
+                        }
+
                         rows += '<li class="unread chatList-item" data-idChatList="' + arrayChat.IDCHATLIST + '" data-timestamp="' + arrayChat.DATETIMELASTMESSAGE + '" data-datetimelastreply="' + arrayChat.DATETIMELASTREPLY + '">\
-                                    <a href="#" > \
+                                    <a href="#" class="px-2"> \
                                         <div class="d-flex">\
                                             <div class="chat-user-img align-self-center me-3 ms-0">\
                                                 <div class="avatar-xs">\
@@ -110,6 +154,7 @@ function getDataChatList(page = 1) {
                                             </div>\
                                             <div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>\
                                             ' + totalUnreadMsgElem + '\
+                                            <div class="chatList-item ps-1"> ' + elemReservatioTypeTag + '</div>\
                                         </div>\
                                     </a>\
                                 </li> ';
@@ -146,7 +191,7 @@ function getDataChatList(page = 1) {
         NProgress.done();
         setUserToken(jqXHR);
         $('#chatStatusNav li button, #filter-searchKeyword').prop('disabled', false);
-        $('#filter-searchKeyword, #filter-idContact').val('');
+        $('#filter-idContact').val('');
     });
 }
 

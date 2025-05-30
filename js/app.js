@@ -728,9 +728,9 @@ function counterTimeChatList() {
                 dateTimeChatListItemUpdateStr = '-';
 
             if (differenceInMinutes < 60) {
-                if (differenceInMinutes == 0) dateTimeChatListItemUpdateStr = "Just Now";
-                if (differenceInMinutes == 1) dateTimeChatListItemUpdateStr = "1 min ago";
-                if (differenceInMinutes > 1) dateTimeChatListItemUpdateStr = differenceInMinutes + " mins ago";
+                if (differenceInMinutes == 0) dateTimeChatListItemUpdateStr = "Now";
+                if (differenceInMinutes == 1) dateTimeChatListItemUpdateStr = "1 min";
+                if (differenceInMinutes > 1) dateTimeChatListItemUpdateStr = differenceInMinutes + " mins";
 
                 if (dateTimeChatListItemStr != dateTimeChatListItemUpdateStr) elemTimestampChatListItem.html(dateTimeChatListItemUpdateStr);
             } else {
@@ -1002,6 +1002,10 @@ function resetSelectedOptionFirstValue(elemID) {
             }
         }
     }
+}
+
+function isValidArray(variable) {
+    return Array.isArray(variable) && variable !== undefined && variable !== null && variable.length > 0;
 }
 
 window.onload = function () {
