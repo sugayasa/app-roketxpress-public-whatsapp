@@ -85,8 +85,8 @@ function getDataChatList(page = 1) {
         searchKeyword = $('#filter-searchKeyword').val(),
         arrReservationType = $('.reservationTypeCheckbox:checked').map(function () {
             return this.value;
-        }).get();
-    chatType = $('#chatStatusNav li button.nav-link.active').attr('data-chatType'),
+        }).get(),
+        chatType = $('#chatStatusNav li button.nav-link.active').attr('data-chatType'),
         dataSend = {
             page: page,
             searchKeyword: searchKeyword,
@@ -109,7 +109,8 @@ function getDataChatList(page = 1) {
         },
         beforeSend: function () {
             NProgress.set(0.4);
-            $("#btnLoadMoreData").replaceWith(loaderElem);
+            if (page == 1) $elemList.html(loaderElem);
+            if (page > 1) $("#btnLoadMoreData").replaceWith(loaderElem);
             recalculateSimpleBar('simpleBar-list-chatList');
             $('#chatStatusNav li button, #filter-searchKeyword').prop('disabled', true);
         },
@@ -471,8 +472,19 @@ $('#chat-inputTextMessage').on('keydown', function (e) {
 $('#chat-inputTextMessage').off('input');
 $('#chat-inputTextMessage').on('input', function () {
     let currentRowsNumber = (this.value.match(/\n/g) || []).length,
-        updatedRowsNumber = currentRowsNumber + 1;
-    $(this).attr('rows', updatedRowsNumber > 2 ? 2 : updatedRowsNumber);
+        updatedRowsNumber = currentRowsNumber + 1,
+        vhReducer = 164;
+    $(this).attr('rows', updatedRowsNumber > 5 ? 5 : updatedRowsNumber);
+
+    switch (updatedRowsNumber) {
+        case 1: break;
+        case 2: vhReducer = 182; break;
+        case 3: vhReducer = 203; break;
+        case 4: vhReducer = 224; break;
+        case 5: vhReducer = 245; break;
+    }
+
+    $('.chat-conversation').css('height', 'calc(100vh - ' + vhReducer + 'px)');
 });
 
 $('#chat-formMessage').off('submit');
