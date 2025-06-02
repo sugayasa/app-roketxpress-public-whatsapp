@@ -630,7 +630,7 @@ function generateChatElemContentHeader(contentHeader, parametersHeader) {
     parametersHeader = JSON.parse(parametersHeader);
 
     if (contentHeader != '') {
-        if (parametersHeader.length > 0) parametersHeader = generateParametersChatTemplate(parametersHeader);
+        if (typeof parametersHeader === 'object' && parametersHeader !== null && !Array.isArray(parametersHeader)) parametersHeader = generateParametersChatTemplate(parametersHeader);
         elemContentHeader = '<p class="mb-0 fw-bold border-bottom border-primary pb-2 mb-2">' + generateChatTextContent(contentHeader, parametersHeader) + '</p>';
     }
 

@@ -542,6 +542,7 @@ function sendMessage() {
 
 function resetFocusChatInputTextMessage() {
     $('#chat-inputTextMessage').focus().attr('rows', 1).val('');
+    $('.chat-conversation').css('height', 'calc(100vh - 164px)');
 }
 
 $('#modal-messageACKDetails').off('show.bs.modal');
