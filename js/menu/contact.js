@@ -3,6 +3,12 @@ var defaultListOfQuestionsPlaceholder = '<span id="messagePreview-listOfQuestion
     elemEmptyTemplateList =
         '<li class="list-group-item text-muted text-center" id="listTemplateMessage-emptyTemplateList">\
             <div role="alert" class="alert alert-warning text-center py-2 mb-0"><span class="text-muted">No template available for this reservation</span></div>\
+        </li>',
+    elemEmptyQuestionText =
+        '<li class="list-group-item text-muted text-center" id="askQuestion-emptyQuestionText">\
+            <div role="alert" class="alert alert-warning text-center py-2 mb-0">\
+                <span class="text-muted">Insert question to send message to customer</span>\
+            </div>\
         </li>';
 
 if (contactFunc == null) {
@@ -394,8 +400,7 @@ function activateOnClickBtnAskQuestion(idContact, phoneNumber) {
         $('#modal-askQuestion').off('show.bs.modal');
         $('#modal-askQuestion').on('show.bs.modal', function () {
             generateDetailReservationInDialog(reservationProperty, 'askQuestion');
-            $('#askQuestion-emptyQuestionText').removeClass('d-none');
-            $('.askQuestion-questionItem').remove();
+            $("#askQuestion-questionList").html(elemEmptyQuestionText);
             generateMessagePreviewTemplate(askQuestionTemplateData, 'askQuestion-messagePreview');
             $('#askQuestion-insertQuestionWarning').addClass('d-none');
         });
@@ -414,8 +419,8 @@ function activateOnClickBtnAskQuestion(idContact, phoneNumber) {
                                         <i class="ri-delete-bin-line"></i>\
                                     </button>\
                                 </li> ';
+                $('#askQuestion-emptyQuestionText').remove();
                 $('#askQuestion-questionList').append(questionItem);
-                $('#askQuestion-emptyQuestionText').addClass('d-none');
                 $('#askQuestion-inputQuestion').val('');
                 activateOnDeleteQuestion();
                 generateQuestionInMessagePreview();
@@ -450,7 +455,7 @@ function activateOnDeleteQuestion() {
         $(this).closest('.askQuestion-questionItem').remove();
 
         let totalQuestion = $('.askQuestion-questionItem').length;
-        if (totalQuestion <= 0) $('#askQuestion-emptyQuestionText').removeClass('d-none');
+        if (totalQuestion <= 0) $("#askQuestion-questionList").html(elemEmptyQuestionText);
         generateQuestionInMessagePreview();
     });
 }
