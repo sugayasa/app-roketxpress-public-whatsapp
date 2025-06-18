@@ -26,14 +26,16 @@ function getUserToken(logout = false) {
 }
 
 function getHardwareID() {
-    var ubid = require('ubid'),
-        hardwareID = '';
-    ubid.get(function (error, signatureData) {
-        if (error) {
-            return hardwareID;
-        }
+    let hardwareID = localStorage.getItem("hardwareID");
+    if (hardwareID !== null && hardwareID !== undefined) {
+        return hardwareID.replaceAll(/[^a-zA-Z0-9]/g, "");
+    }
 
-        hardwareID = signatureData.canvas.signature.toString() + "";
+    var ubid = require('ubid');
+    ubid.get(function (error, signatureData) {
+        if (error) return hardwareID;
+        hardwareID = signatureData.canvas.signature.toString() + "" + moment().unix();
+        localStorage.setItem("hardwareID", hardwareID);
     });
 
     return hardwareID.replaceAll(/[^a-zA-Z0-9]/g, "");
