@@ -591,7 +591,16 @@ function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatConten
                     <a class="dropdown-item chatContentWrap-optionButtonCopy" href="#" data-idMessage="' + idMessage + '">Copy <i class="ri-file-copy-line float-end text-muted"></i></a>\
                 </div>\
             </div>' : '',
-        classIconACK = '';
+        // inactive feature for reply/qoute message
+        // <a class="dropdown-item chatContentWrap-optionButtonReply" href="#" data-idMessage="' + idMessage + '">Reply <i class="ri-reply-line float-end text-muted"></i></a>\
+        quotedMessageElement = classIconACK = '';
+
+    if (arrayChatThread.IDMESSAGEQUOTED !== null && arrayChatThread.IDMESSAGEQUOTED != '') {
+        quotedMessageElement = '<div class="border rounded bg-info chatContentWrap-idMessageQuoted px-2 py-1 mb-2" style="border-left: 6px solid var(--bs-border-color) !important;" data-idMessageQuoted="' + arrayChatThread.IDMESSAGEQUOTED + '">\
+                                    <div class="text-truncate fw-bold">'+ arrayChatThread.MESSAGEQUOTEDSENDER + '</div>\
+                                    <div class="text-truncate">'+ arrayChatThread.MESSAGEQUOTED + '..</div>\
+                                </div>';
+    }
 
     switch (true) {
         case (dateTimeRead !== null && chatThreadPosition == 'R'): classIconACK = 'ri-check-double-line text-primary'; break;
@@ -603,7 +612,7 @@ function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatConten
 
     return '<div class="ctext-wrap" data-idMessage="' + idMessage + '">\
                 <div class="ctext-wrap-content ' + textStartClass + ' ' + classContentLongText + '">\
-                    '+ chatContent + '\
+                    '+ quotedMessageElement + chatContent + '\
                     <p class="chat-time mb-0 d-flex justify-content-between font-size-13">\
                         <span class="me-2" ><i class="ri-time-line align-middle"></i> <span class="align-middle">' + chatTime + '</span></span>\
                         <span class="ms-2" data-bs-toggle="modal" data-bs-target="#modal-messageACKDetails" ' + dataIdChatThreadAttr + ' data-ack-sent="' + dateTimeSentStr + '" data-ack-delivered="' + dateTimeDeliveredStr + '" data-ack-read="' + dateTimeReadStr + '">\
@@ -650,6 +659,26 @@ function activateChatContentOptionButton() {
             }).catch(function (err) {
                 console.error("Failed to copy text: ", err);
             });
+        }
+    });
+
+    $('.chatContentWrap-optionButtonReply').off('click');
+    $('.chatContentWrap-optionButtonReply').on('click', function (e) {
+        let idMessage = $(this).attr('data-idMessage'),
+            elemCtextWrap = $('.ctext-wrap[data-idMessage=' + idMessage + ']');
+
+        if (elemCtextWrap.length > 0) {
+            let textMessage = elemCtextWrap.find('p').first().html().split('<br>', 1)[0];
+            $('#chat-idMessageQuoted').val(idMessage);
+            $('#chat-quotedMessageText').html(textMessage.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ').trim());
+            $('#chat-quotedMessage').removeClass('d-none');
+            $('#chat-inputTextMessage').focus();
+
+            $('#chat-quotedMessageRemove').off('click');
+            $('#chat-quotedMessageRemove').on('click', function (e) {
+                resetQuotedMessage(true);
+            });
+            recalculateChatConversationHeight();
         }
     });
 }

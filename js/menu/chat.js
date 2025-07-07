@@ -379,6 +379,7 @@ function generateChatThreadBody(listChatThread, prepend = false, callback = fals
     if (prepend) $("#chat-conversation-ul").prepend(rowChatThread);
     activateChatContentOptionButton();
     activateScrollToTopChatThread();
+    activateQuotedMessageClick();
     recalculateSimpleBar('chat-conversation', prepend ? false : true);
     activateMagnificPopup();
 
@@ -439,6 +440,17 @@ function activateScrollToTopChatThread() {
     });
 }
 
+function activateQuotedMessageClick() {
+    $('.chatContentWrap-idMessageQuoted').off('click');
+    $('.chatContentWrap-idMessageQuoted').on('click', function (e) {
+        let idMessage = $(this).attr('data-idMessageQuoted'),
+            elemCtextWrap = $('.ctext-wrap[data-idMessage=' + idMessage + ']');
+        if (elemCtextWrap.length > 0) {
+            console.error("Failed to copy text: ", elemCtextWrap);
+        }
+    });
+}
+
 function generateRowChatThread(classRight, initialName, chatContentWrap, userNameChat) {
     return '<li class="chatThread ' + classRight + '">\
                 <div class="conversation-list pb-3">\
@@ -471,21 +483,26 @@ $('#chat-inputTextMessage').on('keydown', function (e) {
 
 $('#chat-inputTextMessage').off('input');
 $('#chat-inputTextMessage').on('input', function () {
-    let currentRowsNumber = (this.value.match(/\n/g) || []).length,
-        updatedRowsNumber = currentRowsNumber + 1,
-        vhReducer = 164;
-    $(this).attr('rows', updatedRowsNumber > 5 ? 5 : updatedRowsNumber);
+    recalculateChatConversationHeight();
+});
 
-    switch (updatedRowsNumber) {
+function recalculateChatConversationHeight() {
+    let vhReducerQuotedMessage = $('#chat-quotedMessage').outerHeight(),
+        inputTextMessageRowsNumber = ($('#chat-inputTextMessage').val().match(/\n/g) || []).length,
+        updatedTextMessageRowsNumber = inputTextMessageRowsNumber + 1,
+        vhReducerTextMessage = 164;
+    $('#chat-inputTextMessage').attr('rows', updatedTextMessageRowsNumber > 5 ? 5 : updatedTextMessageRowsNumber);
+
+    switch (updatedTextMessageRowsNumber) {
         case 1: break;
-        case 2: vhReducer = 182; break;
-        case 3: vhReducer = 203; break;
-        case 4: vhReducer = 224; break;
-        default: vhReducer = 245; break;
+        case 2: vhReducerTextMessage = 182; break;
+        case 3: vhReducerTextMessage = 203; break;
+        case 4: vhReducerTextMessage = 224; break;
+        default: vhReducerTextMessage = 245; break;
     }
 
-    $('.chat-conversation').css('height', 'calc(100vh - ' + vhReducer + 'px)');
-});
+    $('.chat-conversation').css('height', 'calc(100vh - ' + vhReducerTextMessage + 'px  - ' + vhReducerQuotedMessage + 'px)');
+}
 
 $('#chat-formMessage').off('submit');
 $('#chat-formMessage').on('submit', function (e) {
@@ -495,10 +512,12 @@ $('#chat-formMessage').on('submit', function (e) {
 
 function sendMessage() {
     let idContact = $('#chat-idContact').val(),
+        idMessageQuoted = $('#chat-idMessageQuoted').val(),
         phoneNumber = $('#profile-sidebar-phoneNumber').html(),
         message = $('#chat-inputTextMessage').val(),
         dataSend = {
             idContact: idContact,
+            idMessageQuoted: idMessageQuoted,
             message: message,
             phoneNumber: phoneNumber
         };
@@ -540,7 +559,15 @@ function sendMessage() {
     });
 }
 
+function resetQuotedMessage(recalculateHeight = false) {
+    $('#chat-idMessageQuoted').val('');
+    $('#chat-quotedMessageText').html('');
+    $('#chat-quotedMessage').addClass('d-none');
+    if (recalculateHeight) recalculateChatConversationHeight();
+}
+
 function resetFocusChatInputTextMessage() {
+    resetQuotedMessage();
     $('#chat-inputTextMessage').focus().attr('rows', 1).val('');
     $('.chat-conversation').css('height', 'calc(100vh - 164px)');
 }
