@@ -529,14 +529,13 @@ function setVerticalCenterContentContainer(elemId, contentHeight) {
 
 function generateChatContent(arrayChatThread) {
     let idChatThreadType = arrayChatThread.IDCHATTHREADTYPE,
+        contentHeader = arrayChatThread.CHATCONTENTHEADER,
+        contentBody = arrayChatThread.CHATCONTENTBODY,
+        contentFooter = arrayChatThread.CHATCONTENTFOOTER,
         elemContentReturn = '';
 
     switch (parseInt(idChatThreadType)) {
         case 1:
-            let contentHeader = arrayChatThread.CHATCONTENTHEADER,
-                contentBody = arrayChatThread.CHATCONTENTBODY,
-                contentFooter = arrayChatThread.CHATCONTENTFOOTER;
-
             if (contentHeader != '') elemContentReturn += '<p class="mb-0 fw-bold border-bottom border-primary pb-2 mb-2">' + contentHeader + '</p>';
             if (contentBody != '') elemContentReturn += '<p class="mb-0">' + generateChatContentBody(contentBody) + '</p>';
             if (contentFooter != '') elemContentReturn += '<p class="mb-0 small text-muted border-top border-primary pt-2 mt-3">' + contentFooter + '</p>';
@@ -555,6 +554,9 @@ function generateChatContent(arrayChatThread) {
                                     </li>\
                                 </ul >';
             break;
+        case 6:
+            elemContentReturn += '<p class="mb-0">' + generateChatContentLocationLink(contentBody) + '</p>';
+            break;
     }
 
     return elemContentReturn;
@@ -567,6 +569,21 @@ function generateChatContentBody(contentBody) {
     contentBody = contentBody.replace(/\*(.*?)\*/g, "<b>$1</b>");
     contentBody = contentBody.replace(/\_(.*?)\_/g, "<u>$1</u>");
     contentBody = contentBody.replace(/\~(.*?)\~/g, "<del>$1</del>");
+
+    return contentBody;
+}
+
+function generateChatContentLocationLink(contentBody) {
+    let coordinateParts = contentBody.split(';');
+
+    if (coordinateParts.length === 2) {
+        let lat = coordinateParts[0].trim();
+        let lng = coordinateParts[1].trim();
+        let mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        contentBody = `<a href="${mapUrl}" target="_blank" class="text-decoration-none bg-info py-1 px-2 rounded-2" style="color: inherit;"><i class="ri-map-pin-line"></i> Show Location On Map</a>`;
+    } else {
+        contentBody = '<span class="bg-info py-1 px-2 rounded-2">Invalid location format</span>';
+    }
 
     return contentBody;
 }
@@ -595,7 +612,7 @@ function generateChatContentWrap(chatThreadPosition, arrayChatThread, chatConten
         // <a class="dropdown-item chatContentWrap-optionButtonReply" href="#" data-idMessage="' + idMessage + '">Reply <i class="ri-reply-line float-end text-muted"></i></a>\
         quotedMessageElement = classIconACK = '';
 
-    if (arrayChatThread.IDMESSAGEQUOTED !== null && arrayChatThread.IDMESSAGEQUOTED != '') {
+    if (arrayChatThread.IDMESSAGEQUOTED !== undefined && arrayChatThread.IDMESSAGEQUOTED !== null && arrayChatThread.IDMESSAGEQUOTED != '') {
         quotedMessageElement = '<div class="border rounded bg-info chatContentWrap-idMessageQuoted px-2 py-1 mb-2" style="border-left: 6px solid var(--bs-border-color) !important;" data-idMessageQuoted="' + arrayChatThread.IDMESSAGEQUOTED + '">\
                                     <div class="text-truncate fw-bold">'+ arrayChatThread.MESSAGEQUOTEDSENDER + '</div>\
                                     <div class="text-truncate">'+ arrayChatThread.MESSAGEQUOTED + '..</div>\

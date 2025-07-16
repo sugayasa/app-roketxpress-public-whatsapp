@@ -293,3 +293,12 @@ table td, table th {
 .w-60 {
   width: 60% !important;
 }
+
+.splashed-border {
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+  transition: box-shadow 0.3s ease;
+}
+
+.splashed-border.active {
+  box-shadow: 0 0 20px rgba(52, 152, 219, 0.9);
+}

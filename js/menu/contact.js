@@ -244,8 +244,10 @@ function getDetailContact(idContact) {
                             areaName = arrayReservation.AREANAME.toLowerCase() == "without transfer" ? "<b class='text-danger'>" + arrayReservation.AREANAME + "</b>" : arrayReservation.AREANAME,
                             allowAskQuestion = arrayReservation.ALLOWASKQUESTION,
                             listTemplateMessage = arrayReservation.LISTTEMPLATEMESSAGE,
+                            statusReservation = arrayReservation.STATUS,
+                            refundType = arrayReservation.REFUNDTYPE,
                             idReservation = arrayReservation.IDRESERVATION,
-                            btnAskQuestion = btnSendTemplateMessage = '';
+                            cancelRefundBadge = btnAskQuestion = btnSendTemplateMessage = '';
 
                         if (arrayReservation.DURATIONOFDAY > 1) {
                             reservationDateTimeStr = reservationDateTimeStr + " - " + arrayReservation.RESERVATIONDATEENDSTR + " " + arrayReservation.RESERVATIONTIMEENDSTR;
@@ -268,13 +270,23 @@ function getDetailContact(idContact) {
                         }
 
                         let classMarginTop = index == 0 ? '' : 'mt-2';
+
+                        if (parseInt(statusReservation) == -1) {
+                            let refundTypeStr = '';
+                            switch (parseInt(refundType)) {
+                                case -1: refundTypeStr = ' : Full Refund'; break;
+                                case -2: refundTypeStr = ' : Partial Refund'; break;
+                            }
+                            cancelRefundBadge = '<span class="badge font-size-13 bg-danger me-1">Cancelled' + refundTypeStr + '</span>';
+                        }
+
                         rowDetailReservation +=
                             '<div class="card bg-light2 ' + classMarginTop + ' mb-2 w-100 rounded-3 listReservationCard" data-idReservation="' + idReservation + '">\
                                 <div class="card-body p-4" >\
                                     <div class="row">\
                                         <div class="col-lg-8 col-sm-6 border-bottom pb-3 mb-3"><h6 class="mb-0 listReservationCard-reservationTitle">' + arrayReservation.RESERVATIONTITLE + '</h6></div>\
                                             <div class="col-lg-4 col-sm-6 border-bottom pb-3 mb-3 text-end">\
-                                                <h6 class="mb-0 listReservationCard-sourceName">' + arrayReservation.SOURCENAME + '</h6>\
+                                                <h6 class="mb-0 listReservationCard-sourceName">' + cancelRefundBadge + arrayReservation.SOURCENAME + '</h6>\
                                             </div>\
                                             <div class="col-lg-4 col-sm-12">\
                                                 <div class="row">\

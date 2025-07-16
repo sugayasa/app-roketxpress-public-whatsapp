@@ -444,9 +444,17 @@ function activateQuotedMessageClick() {
     $('.chatContentWrap-idMessageQuoted').off('click');
     $('.chatContentWrap-idMessageQuoted').on('click', function (e) {
         let idMessage = $(this).attr('data-idMessageQuoted'),
-            elemCtextWrap = $('.ctext-wrap[data-idMessage=' + idMessage + ']');
-        if (elemCtextWrap.length > 0) {
-            console.error("Failed to copy text: ", elemCtextWrap);
+            elemCtextWrapContent = $('.ctext-wrap[data-idMessage=' + idMessage + ']').find('.ctext-wrap-content');
+        if (elemCtextWrapContent.length > 0) {
+            elemCtextWrapContent.attr('tabindex', -1);
+            $('html, body').animate({
+                scrollTop: elemCtextWrapContent.offset().top
+            }, 500, function () {
+                elemCtextWrapContent.focus().addClass('splashed-border active');
+                setTimeout(() => {
+                    elemCtextWrapContent.removeClass('splashed-border active');
+                }, 400);
+            });
         }
     });
 }
