@@ -34,12 +34,13 @@ if (chatFunc == null) {
             }), $(".user-profile-show").click(function () {
                 $(".user-profile-sidebar").show()
             });
-            setVerticalCenterContentContainer('content-chat-landing', 150);
+
             setOptionHelper('modalEditReservation-timeHour', 'optionHours');
             setOptionHelper('modalEditReservation-timeMinute', 'optionMinutes');
             setOptionHelper('modalEditReservation-pickUpArea', 'dataAllAreaType');
             getDataChatList();
             activateCounterFieldEvent();
+            resetChatContentStarterElement();
             generateDatePickerElem('.modal');
         });
     }
@@ -128,22 +129,41 @@ function getDataChatList(page = 1) {
                     $.each(dataChatList, function (index, arrayChat) {
                         var totalUnreadMsg = arrayChat.TOTALUNREADMESSAGE,
                             arrIdReservationType = arrayChat.ARRIDRESERVATIONTYPE,
-                            elemReservatioTypeTag = '';
+                            badgeHandleStatusIcon = 'ri-robot-2-line',
+                            badgeHandleStatusTextColor = 'primary',
+                            elemReservatioTypeTag = elemBadgeHandleStatus = '';
                         totalUnreadMsgElem = totalUnreadMsg > 0 ? '<div class="unread-message"><span class="badge badge-soft-danger rounded-pill py-0">' + totalUnreadMsg + '</span></div>' : '';
 
                         if (arrIdReservationType.length > 0) {
                             for (var i = 0; i < arrIdReservationType.length; i++) {
-                                let tagClass = dataReservationTypeClass[arrIdReservationType[i]];
+                                var tagClass = dataReservationTypeClass[arrIdReservationType[i]];
                                 if (typeof tagClass != 'undefined' && tagClass != null) elemReservatioTypeTag += '<div class="bg-' + tagClass + ' width-5px">&nbsp;</div>';
                             }
                         } else {
-                            elemReservatioTypeTag += '<div class="width-5px">&nbsp;</div>';
+                            elemReservatioTypeTag += '<div class="bg-dark width-5px">&nbsp;</div>';
+                        }
+
+                        if (parseInt(arrayChat.HANDLEFORCE) == 1) {
+                            elemBadgeHandleStatus = '<i class="spinner-grow spinner-grow-sm text-success"></i>';
+                        } else {
+                            switch (parseInt(arrayChat.HANDLESTATUS)) {
+                                case 2:
+                                    badgeHandleStatusIcon = 'ri-user-voice-line';
+                                    badgeHandleStatusTextColor = 'success';
+                                    break;
+                                default:
+                                    badgeHandleStatusIcon = 'ri-robot-2-line';
+                                    badgeHandleStatusTextColor = 'primary';
+                                    break;
+                            }
+                            elemBadgeHandleStatus = '<i class="text-' + badgeHandleStatusTextColor + ' font-size-18 ' + badgeHandleStatusIcon + '"></i>';
                         }
 
                         rows += '<li class="unread chatList-item" data-idChatList="' + arrayChat.IDCHATLIST + '" data-timestamp="' + arrayChat.DATETIMELASTMESSAGE + '" data-datetimelastreply="' + arrayChat.DATETIMELASTREPLY + '">\
                                     <a href="#" class="px-2"> \
                                         <div class="d-flex">\
                                             <div class="chat-user-img align-self-center me-3 ms-0">\
+                                                <span class="user-status-handle"></span>\
                                                 <div class="avatar-xs">\
                                                     <span class="avatar-title rounded-circle bg-primary-subtle text-primary">'+ arrayChat.NAMEALPHASEPARATOR + '</span>\
                                                 </div>\
@@ -156,6 +176,7 @@ function getDataChatList(page = 1) {
                                             <div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>\
                                             ' + totalUnreadMsgElem + '\
                                             <div class="chatList-item ps-1"> ' + elemReservatioTypeTag + '</div>\
+                                            <div class="chatList-item chatList-item-badgeHandleStatus ps-1">'+ elemBadgeHandleStatus + '</div>\
                                         </div>\
                                     </a>\
                                 </li> ';
@@ -223,6 +244,12 @@ function setChatContentStarterElement() {
     }
 }
 
+function resetChatContentStarterElement() {
+    $("#container-chatForm").prepend(contentChatLanding);
+    $("#chat-topbar, #chat-conversation, #chat-input-section").addClass('d-none');
+    setVerticalCenterContentContainer('content-chat-landing', 150);
+}
+
 function generateChatThread(idChatList) {
     var dataSend = { idChatList: idChatList, page: 1 };
     $.ajax({
@@ -240,6 +267,7 @@ function generateChatThread(idChatList) {
         },
         beforeSend: function () {
             NProgress.set(0.4);
+            $("#chat-topbar-badgeHandleStatus").html("");
             $("#chat-topbar-initial, #chat-topbar-fullName").html("-");
             $("#profile-sidebar-initial, #profile-sidebar-fullName").html("-");
             $("#profile-sidebar-phoneNumber, #profile-sidebar-countryContinent, #profile-sidebar-email").html("-");
@@ -247,6 +275,8 @@ function generateChatThread(idChatList) {
             $("#chat-threadPage").val(1);
             $("#chat-isMaximumChatThreadContent").val(false);
             $('.simplebar-content-wrapper').has('#chat-conversation-ul').off('scroll');
+            $('#chat-actionButton-markAsUnread, #chat-actionButton-activateHuman, #chat-actionButton-activateBOT').prop('disabled', true).addClass('d-none').off('click');
+            $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
         },
         complete: function (jqXHR, textStatus) {
             var responseJSON = jqXHR.responseJSON;
@@ -255,7 +285,10 @@ function generateChatThread(idChatList) {
                 case 200:
                     var detailContact = responseJSON.detailContact,
                         listChatThread = responseJSON.listChatThread,
-                        listActiveReservation = responseJSON.listActiveReservation;
+                        listActiveReservation = responseJSON.listActiveReservation,
+                        handleStatus = parseInt(detailContact.HANDLESTATUS),
+                        handleForce = parseInt(detailContact.HANDLEFORCE),
+                        totalUnreadMessage = parseInt(detailContact.TOTALUNREADMESSAGE);
 
                     $("#chat-topbar-initial, #profile-sidebar-initial").html(detailContact.NAMEALPHASEPARATOR);
                     $("#chat-topbar-fullName, #profile-sidebar-fullName").html(detailContact.NAMEFULL);
@@ -265,8 +298,17 @@ function generateChatThread(idChatList) {
                     $("#chat-idChatList").val(idChatList);
                     $("#chat-timeStampLastReply").val(detailContact.DATETIMELASTREPLY);
                     $("#chat-idContact").val(detailContact.IDCONTACT);
+                    $("#chat-handleStatus").val(handleStatus);
+                    $("#chat-handleForce").val(handleForce);
+
+                    if (totalUnreadMessage > 0) {
+                        $('#chat-actionButton-markAsUnread').prop('disabled', false).removeClass('d-none');
+                        activateBtnMarkAsUnread(idChatList, totalUnreadMessage);
+                    }
+
                     generateChatThreadBody(listChatThread);
                     counterTimeChatList();
+                    recalculateChatConversationHeight();
 
                     if (listActiveReservation) {
                         var reservationListElem = '';
@@ -349,12 +391,51 @@ function generateChatThread(idChatList) {
     });
 }
 
+function activateBtnMarkAsUnread(idChatList, totalUnreadMessage) {
+    $('#chat-actionButton-markAsUnread').off('click');
+    $('#chat-actionButton-markAsUnread').on('click', function (e) {
+        let dataSend = { idChatList: idChatList, totalUnreadMessage: totalUnreadMessage };
+        $.ajax({
+            type: 'POST',
+            url: baseURL + "chat/setMarkAsUnread",
+            contentType: 'application/json',
+            dataType: 'json',
+            cache: false,
+            data: mergeDataSend(dataSend),
+            xhrFields: { withCredentials: true },
+            headers: { Authorization: "Bearer " + getUserToken() },
+            beforeSend: function () {
+                NProgress.set(0.4);
+                $("#window-loader").modal("show");
+            },
+            complete: function (jqXHR, textStatus) {
+                var responseJSON = jqXHR.responseJSON;
+                switch (jqXHR.status) {
+                    case 200:
+                        resetChatContentStarterElement();
+                        $("#list-chatListData").find('li.chatList-item').removeClass('active');
+                        break;
+                    default:
+                        e.preventDefault();
+                        generateWarningMessageResponse(jqXHR);
+                        break;
+                }
+            }
+        }).always(function (jqXHR, textStatus) {
+            NProgress.done();
+            setUserToken(jqXHR);
+            $("#window-loader").modal("hide");
+        });
+    });
+}
+
 function generateChatThreadBody(listChatThread, prepend = false, callback = false) {
     let rowChatThread = chatContentWrap = '';
     $.each(listChatThread, function (index, arrayChatThread) {
         var chatThreadPosition = arrayChatThread.CHATTHREADPOSITION,
             userNameChat = arrayChatThread.USERNAMECHAT,
             dayTitle = arrayChatThread.DAYTITLE,
+            isBot = parseInt(arrayChatThread.ISBOT),
             chatContent = generateChatContent(arrayChatThread),
             classRight = chatThreadPosition == 'L' ? '' : 'right';
         var arrayChatThreadNext = (index + 1 < listChatThread.length) ? listChatThread[index + 1] : false,
@@ -369,8 +450,9 @@ function generateChatThreadBody(listChatThread, prepend = false, callback = fals
             isDayTitleElemExist = $elemRowChatThread.find('.chat-day-title[data-dayTitle="' + dayTitle + '"]').length > 0;
 
         if (chatThreadPosition != chatThreadPositionNext || userNameChat != userNameChatNext || (dayTitle != dayTitleNext && !isDayTitleElemExist)) {
+            let senderNameInitial = isBot == 1 ? '<i class="text-primary font-size-18 ri-robot-2-line"></i>' : arrayChatThread.INITIALNAME;
             if (!isDayTitleElemExist) rowChatThread += '<li><div class="chat-day-title" data-dayTitle="' + dayTitle + '"><span class="title">' + dayTitle + '</span></div></li>';
-            rowChatThread += generateRowChatThread(classRight, arrayChatThread.INITIALNAME, chatContentWrap, userNameChat);
+            rowChatThread += generateRowChatThread(classRight, senderNameInitial, chatContentWrap, userNameChat);
             chatContentWrap = '';
         }
     });
@@ -498,6 +580,7 @@ function recalculateChatConversationHeight() {
     let vhReducerQuotedMessage = $('#chat-quotedMessage').outerHeight(),
         inputTextMessageRowsNumber = ($('#chat-inputTextMessage').val().match(/\n/g) || []).length,
         updatedTextMessageRowsNumber = inputTextMessageRowsNumber + 1,
+        vhReducerActionButton = $('#chat-actionButton').outerHeight(),
         vhReducerTextMessage = 164;
     $('#chat-inputTextMessage').attr('rows', updatedTextMessageRowsNumber > 5 ? 5 : updatedTextMessageRowsNumber);
 
@@ -509,7 +592,7 @@ function recalculateChatConversationHeight() {
         default: vhReducerTextMessage = 245; break;
     }
 
-    $('.chat-conversation').css('height', 'calc(100vh - ' + vhReducerTextMessage + 'px  - ' + vhReducerQuotedMessage + 'px)');
+    $('.chat-conversation').css('height', 'calc(100vh - ' + vhReducerTextMessage + 'px  - ' + vhReducerQuotedMessage + 'px - ' + vhReducerActionButton + 'px)');
 }
 
 $('#chat-formMessage').off('submit');
@@ -520,11 +603,13 @@ $('#chat-formMessage').on('submit', function (e) {
 
 function sendMessage() {
     let idContact = $('#chat-idContact').val(),
+        idChatList = $('#chat-idChatList').val(),
         idMessageQuoted = $('#chat-idMessageQuoted').val(),
         phoneNumber = $('#profile-sidebar-phoneNumber').html(),
         message = $('#chat-inputTextMessage').val(),
         dataSend = {
             idContact: idContact,
+            idChatList: idChatList,
             idMessageQuoted: idMessageQuoted,
             message: message,
             phoneNumber: phoneNumber
@@ -553,6 +638,7 @@ function sendMessage() {
                     let currentTimeStamp = responseJSON.currentTimeStamp;
                     playStoredAudio("message_sent");
                     localStorage.setItem('lastNotifTimeStamp', currentTimeStamp);
+                    $('#chat-actionButton-markAsUnread').prop('disabled', true).addClass('d-none');
                     resetFocusChatInputTextMessage();
                     break;
                 default:

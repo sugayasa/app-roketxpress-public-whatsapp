@@ -6,7 +6,8 @@ var MAIN_URL = window.location.origin,
     arrMediaSound = [
         "message_sent.mp3",
         "message_received_active.mp3",
-        "message_received_background.mp3"
+        "message_received_background.mp3",
+        "warning_alarm.mp3"
     ];
 
 function clearUserToken() {

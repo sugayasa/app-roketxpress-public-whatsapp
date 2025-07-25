@@ -10,7 +10,11 @@ let elemToast;
         return new bootstrap.Popover(t)
     }), o = document.getElementsByTagName("body")[0], (t = document.querySelectorAll(".light-dark-mode")) && t.length && t.forEach(function (t) {
         t.addEventListener("click", function (t) {
-            o.hasAttribute("data-bs-theme") && "dark" == o.getAttribute("data-bs-theme") ? document.body.setAttribute("data-bs-theme", "light") : document.body.setAttribute("data-bs-theme", "dark")
+            o.hasAttribute("data-bs-theme") && "dark" == o.getAttribute("data-bs-theme") ? document.body.setAttribute("data-bs-theme", "light") : document.body.setAttribute("data-bs-theme", "dark");
+            $(".card").each(function () {
+                if (o.getAttribute("data-bs-theme") === "dark") $(this).removeClass('bg-light2').addClass('bg-light');
+                else $(this).removeClass('bg-light').addClass('bg-light2');
+            });
         })
     }), Waves.init()
 }(jQuery);
@@ -62,9 +66,9 @@ $(document).ready(function () {
                 renderMainView(JSON.parse(responseJSON));
             }
 
-            if (typeof intervalId !== 'undefined') {
-                clearInterval(intervalId);
-            }
+            if (typeof intervalId !== 'undefined') clearInterval(intervalId);
+            if (typeof intervalIdForceHandleChatList !== 'undefined') clearInterval(intervalIdForceHandleChatList);
+            if (typeof intervalIdForceHandleChatMenu !== 'undefined') clearInterval(intervalIdForceHandleChatMenu);
         }),
         $(document).on("visibilitychange", function () {
             if (document.visibilityState === "visible") {
@@ -342,6 +346,12 @@ function renderMainView(responseJSON, callback) {
 
     // if (responseJSON.isChatContent) $("#content-container").addClass('user-chat');
     // if (!responseJSON.isChatContent) $("#content-container").removeClass('user-chat');
+    let themeType = document.getElementsByTagName("body")[0].getAttribute("data-bs-theme");
+
+    $(".card").each(function () {
+        if (themeType === "dark") $(this).removeClass('bg-light2').addClass('bg-light');
+        else $(this).removeClass('bg-light').addClass('bg-light2');
+    });
 
     if ($(".input-date-single").length) generateDatePickerElem();
     NProgress.done();
@@ -799,12 +809,14 @@ function counterTimeChatList() {
                     timeRemaining = countdownTime.diff(moment.utc(), 'seconds');
 
                 if (timeRemaining > 0) {
-                    let hours = Math.floor(timeRemaining / 3600),
+                    let chatHandleStatus = $('#chat-handleStatus').val(),
+                        chatHandleForce = $('#chat-handleForce').val(),
+                        hours = Math.floor(timeRemaining / 3600),
                         minutes = Math.floor((timeRemaining % 3600) / 60),
                         seconds = timeRemaining % 60;
 
                     $('#chat-topbar-badgeSession').html(`${("00" + hours).slice(-2)}:${("00" + minutes).slice(-2)}:${("00" + seconds).slice(-2)}`).removeClass('bg-danger').addClass('bg-success');
-                    $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', false);
+                    setStatusHandleElement(chatHandleStatus, chatHandleForce);
                 } else {
                     setInactiveSessionDisableChatInput();
                 }
@@ -812,8 +824,73 @@ function counterTimeChatList() {
                 setInactiveSessionDisableChatInput();
             }
         }
-
     }, 1000);
+}
+
+function setStatusHandleElement(chatHandleStatus, chatHandleForce) {
+    let badgeHandleStatus = '';
+    chatHandleStatus = parseInt(chatHandleStatus);
+    chatHandleForce = parseInt(chatHandleForce);
+
+    if (chatHandleStatus == 2) {
+        $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', false);
+    } else {
+        $('#chat-inputTextMessage, #chat-btnSendMessage').prop('disabled', true);
+    }
+
+    switch (chatHandleStatus) {
+        case 1:
+            badgeHandleStatus = '<span class="badge bg-primary font-size-13"><i class="font-size-15 ri-robot-2-line"></i> Handle by BOT</span>';
+            $('#chat-actionButton-activateHuman').prop('disabled', false).removeClass('d-none');
+            $('#chat-actionButton-activateBOT').prop('disabled', true).addClass('d-none');
+            break;
+        case 2:
+            badgeHandleStatus = '<span class="badge bg-success font-size-13"><i class="font-size-15 ri-user-voice-line"></i> Handle by Human</span>';
+            $('#chat-actionButton-activateHuman').prop('disabled', true).addClass('d-none');
+            if (chatHandleForce == 0) $('#chat-actionButton-activateBOT').prop('disabled', false).removeClass('d-none');
+            break;
+    }
+
+    $("#chat-topbar-badgeHandleStatus").html(badgeHandleStatus);
+    recalculateChatConversationHeight();
+    activateActionButtonHandleStatus();
+}
+
+function activateActionButtonHandleStatus() {
+    $('#chat-actionButton-activateHuman, #chat-actionButton-activateBOT').off('click');
+    $('#chat-actionButton-activateHuman, #chat-actionButton-activateBOT').on('click', function (e) {
+        e.preventDefault();
+        let idChatList = $("#chat-idChatList").val(),
+            handleStatus = $(this).attr('data-handleStatus'),
+            dataSend = { idChatList: idChatList, handleStatus: handleStatus };
+        $.ajax({
+            type: 'POST',
+            url: baseURL + "chat/setActiveHandleStatus",
+            contentType: 'application/json',
+            dataType: 'json',
+            cache: false,
+            data: mergeDataSend(dataSend),
+            xhrFields: { withCredentials: true },
+            headers: { Authorization: "Bearer " + getUserToken() },
+            beforeSend: function () {
+                NProgress.set(0.4);
+                $("#window-loader").modal("show");
+            },
+            complete: function (jqXHR, textStatus) {
+                switch (jqXHR.status) {
+                    case 200: break;
+                    default:
+                        e.preventDefault();
+                        generateWarningMessageResponse(jqXHR);
+                        break;
+                }
+            }
+        }).always(function (jqXHR, textStatus) {
+            NProgress.done();
+            setUserToken(jqXHR);
+            $("#window-loader").modal("hide");
+        });
+    });
 }
 
 function setInactiveSessionDisableChatInput() {
