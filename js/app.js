@@ -861,8 +861,9 @@ function activateActionButtonHandleStatus() {
     $('#chat-actionButton-activateHuman, #chat-actionButton-activateBOT').on('click', function (e) {
         e.preventDefault();
         let idChatList = $("#chat-idChatList").val(),
+            idContact = $("#chat-idContact").val(),
             handleStatus = $(this).attr('data-handleStatus'),
-            dataSend = { idChatList: idChatList, handleStatus: handleStatus };
+            dataSend = { idChatList: idChatList, idContact: idContact, handleStatus: handleStatus };
         $.ajax({
             type: 'POST',
             url: baseURL + "chat/setActiveHandleStatus",
