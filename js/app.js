@@ -1,4 +1,4 @@
-let elemToast;
+let elemToast, tabId;
 ! function (e) {
     "use strict";
     var o, t;
@@ -67,8 +67,6 @@ $(document).ready(function () {
             }
 
             if (typeof intervalId !== 'undefined') clearInterval(intervalId);
-            if (typeof intervalIdForceHandleChatList !== 'undefined') clearInterval(intervalIdForceHandleChatList);
-            if (typeof intervalIdForceHandleChatMenu !== 'undefined') clearInterval(intervalIdForceHandleChatMenu);
         }),
         $(document).on("visibilitychange", function () {
             if (document.visibilityState === "visible") {
@@ -226,7 +224,22 @@ $(document).ready(function () {
     } else {
         $('.menu-item').first().click();
     }
+
+    tabId = getTabId();
 });
+
+function getTabId() {
+    let tabId = sessionStorage.getItem('tabId');
+    if (!tabId) {
+        let ubid = require('ubid');
+        ubid.get(function (error, signatureData) {
+            if (error) return tabId;
+            tabId = signatureData.canvas.signature.toString() + "" + moment().unix();
+            sessionStorage.setItem('tabId', 'tab-' + tabId);
+        });
+    }
+    return tabId;
+}
 
 function activateMagnificPopup() {
     $(".popup-img").magnificPopup({
