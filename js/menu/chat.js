@@ -176,7 +176,7 @@ function getDataChatList(page = 1) {
                                             </div>\
                                             <div class="chatList-item-time font-size-11">' + arrayChat.DATETIMELASTMESSAGESTR + '</div>\
                                             ' + totalUnreadMsgElem + '\
-                                            <div class="chatList-item ps-1"> ' + elemReservatioTypeTag + '</div>\
+                                            <!--<div class="chatList-item ps-1"> ' + elemReservatioTypeTag + '</div>\-->\
                                             <div class="chatList-item chatList-item-badgeHandleStatus ps-1">'+ elemBadgeHandleStatus + '</div>\
                                         </div>\
                                     </a>\
