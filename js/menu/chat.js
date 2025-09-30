@@ -5,29 +5,30 @@ if (chatFunc == null) {
             let dataOptionHelper = JSON.parse(localStorage.getItem("optionHelper")),
                 dataReservationType = dataOptionHelper['dataReservationType'];
 
-            if (typeof dataReservationType != 'undefined' && dataReservationType != null && dataReservationType.length > 0) {
-                let checkBoxReservationType = '';
-                $.each(dataReservationType, function (index, arrayReservationType) {
-                    let checked = idReservationType == arrayReservationType.ID ? 'checked' : '';
-                    if (idReservationType == 0) checked = 'checked';
+            // DISABLE RESERVATION TYPE FILTER FOR NOW
+            // if (typeof dataReservationType != 'undefined' && dataReservationType != null && dataReservationType.length > 0) {
+            //     let checkBoxReservationType = '';
+            //     $.each(dataReservationType, function (index, arrayReservationType) {
+            //         let checked = idReservationType == arrayReservationType.ID ? 'checked' : '';
+            //         if (idReservationType == 0) checked = 'checked';
 
-                    checkBoxReservationType += '<div class="form-check form-check-inline">\
-                                                    <input '+ checked + ' class="form-check-input reservationTypeCheckbox" type="checkbox" id="reservationType-' + arrayReservationType.ID + '" value="' + arrayReservationType.ID + '">\
-                                                    <label \
-                                                        for="reservationType-'+ arrayReservationType.ID + '" \
-                                                        class="form-check-label font-size-12 pe-1 border-end border-5 border-' + arrClassColor[index] + '">\
-                                                            ' + arrayReservationType.VALUE + '\
-                                                    </label>\
-                                                </div>';
-                    dataReservationTypeClass[arrayReservationType.ID] = arrClassColor[index];
-                });
+            //         checkBoxReservationType += '<div class="form-check form-check-inline">\
+            //                                         <input '+ checked + ' class="form-check-input reservationTypeCheckbox" type="checkbox" id="reservationType-' + arrayReservationType.ID + '" value="' + arrayReservationType.ID + '">\
+            //                                         <label \
+            //                                             for="reservationType-'+ arrayReservationType.ID + '" \
+            //                                             class="form-check-label font-size-12 pe-1 border-end border-5 border-' + arrClassColor[index] + '">\
+            //                                                 ' + arrayReservationType.VALUE + '\
+            //                                         </label>\
+            //                                     </div>';
+            //         dataReservationTypeClass[arrayReservationType.ID] = arrClassColor[index];
+            //     });
 
-                $("#filter-reservationTypeContainer").append(checkBoxReservationType);
-                $('.reservationTypeCheckbox').off('click');
-                $('.reservationTypeCheckbox').on('click', function (e) {
-                    getDataChatList();
-                });
-            }
+            //     $("#filter-reservationTypeContainer").append(checkBoxReservationType);
+            //     $('.reservationTypeCheckbox').off('click');
+            //     $('.reservationTypeCheckbox').on('click', function (e) {
+            //         getDataChatList();
+            //     });
+            // }
 
             $("#user-profile-hide").click(function () {
                 $(".user-profile-sidebar").hide()
@@ -84,14 +85,14 @@ function getDataChatList(page = 1) {
     var $elemList = $('#list-chatListData'),
         idContact = $('#filter-idContact').val(),
         searchKeyword = $('#filter-searchKeyword').val(),
-        arrReservationType = $('.reservationTypeCheckbox:checked').map(function () {
-            return this.value;
-        }).get(),
+        // arrReservationType = $('.reservationTypeCheckbox:checked').map(function () {
+        //     return this.value;
+        // }).get(),
         chatType = $('#chatStatusNav li button.nav-link.active').attr('data-chatType'),
         dataSend = {
             page: page,
             searchKeyword: searchKeyword,
-            arrReservationType: arrReservationType,
+            // arrReservationType: arrReservationType,
             chatType: chatType,
             idContact: idContact
         };
@@ -134,14 +135,14 @@ function getDataChatList(page = 1) {
                             elemReservatioTypeTag = elemBadgeHandleStatus = '';
                         totalUnreadMsgElem = totalUnreadMsg > 0 ? '<div class="unread-message"><span class="badge badge-soft-danger rounded-pill py-0">' + totalUnreadMsg + '</span></div>' : '';
 
-                        if (arrIdReservationType.length > 0) {
-                            for (var i = 0; i < arrIdReservationType.length; i++) {
-                                var tagClass = dataReservationTypeClass[arrIdReservationType[i]];
-                                if (typeof tagClass != 'undefined' && tagClass != null) elemReservatioTypeTag += '<div class="bg-' + tagClass + ' width-5px">&nbsp;</div>';
-                            }
-                        } else {
-                            elemReservatioTypeTag += '<div class="bg-dark width-5px">&nbsp;</div>';
-                        }
+                        // if (arrIdReservationType.length > 0) {
+                        //     for (var i = 0; i < arrIdReservationType.length; i++) {
+                        //         var tagClass = dataReservationTypeClass[arrIdReservationType[i]];
+                        //         if (typeof tagClass != 'undefined' && tagClass != null) elemReservatioTypeTag += '<div class="bg-' + tagClass + ' width-5px">&nbsp;</div>';
+                        //     }
+                        // } else {
+                        //     elemReservatioTypeTag += '<div class="bg-dark width-5px">&nbsp;</div>';
+                        // }
 
                         if (parseInt(arrayChat.HANDLEFORCE) == 1) {
                             elemBadgeHandleStatus = '<i class="spinner-grow spinner-grow-sm text-success"></i>';
